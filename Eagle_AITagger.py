@@ -6,7 +6,6 @@ import sys
 import multiprocessing
 import concurrent.futures
 from pathlib import Path
-import shlex
 
 # 对单个文件的处理
 def TagsToJson(file) -> None:
@@ -16,18 +15,15 @@ def TagsToJson(file) -> None:
 
     # 读取txt，从tags中删除不必要的标签
     if txt_working is not None:
-        re_tags_ToDel_1 = r'(?:\d|\d_|multiple|multiple_)(?:girl|boy|girls|boys)'
-        re_tags_ToDel_2 = r'\b\w+_(?:quality|background)\b'
-        re_tags_ToDel_3 = r'solo|masterpiece|illustration'
+        # re_tags_ToDel_1 = r'(?:\d|\d_|multiple|multiple_)(?:girl|boy|girls|boys)'
+        # re_tags_ToDel_2 = r'\b\w+_(?:quality|background)\b'
+        # re_tags_ToDel_3 = r'solo|masterpiece|illustration'
         re_tags_ToDel_4 = r'^[\s,]+|[\s,]+$'
 
         try:
             with txt_working.open(mode = 'r', encoding='utf-8') as f:
                 txt_OriTags = f.read()
-                txt_CleanedTags = re.sub(re_tags_ToDel_1, '', txt_OriTags)
-                txt_CleanedTags = re.sub(re_tags_ToDel_2, '', txt_CleanedTags)
-                txt_CleanedTags = re.sub(re_tags_ToDel_3, '', txt_CleanedTags)
-                txt_CleanedTags = txt_CleanedTags.replace(' ,', '')
+                txt_CleanedTags = txt_OriTags.replace(' ,', '')
                 txt_CleanedTags = re.sub(re_tags_ToDel_4, '', txt_CleanedTags)
 
                 txt_Tags_list = [
@@ -87,6 +83,7 @@ TransIf: bool
 
 while True:
     img_input_list = input()
+    # img_input_list = r''
     img_input_list = re.sub(r'([a-zA-Z]:\\)', r'_,_,_ \1',  img_input_list)
     img_input_list = re.sub(r'_,_,_\s*([a-zA-Z]:\\)', r'_,_,_\1',  img_input_list)
     img_input_list = re.sub(r'^_,_,_(.*)', r'\1',  img_input_list)

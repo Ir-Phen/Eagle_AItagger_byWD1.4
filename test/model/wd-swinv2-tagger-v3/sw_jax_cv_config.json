@@ -1,0 +1,19 @@
+{
+    "image_size": 448,
+    "model_name": "swinv2_base",
+    "model_args": {
+        "image_size": 448,
+        "patch_size": 4,
+        "in_chans": 3,
+        "num_classes": 10861,
+        "embed_dim": 128,
+        "window_size": 14,
+        "mlp_ratio": 4.0,
+        "qkv_bias": true,
+        "drop_rate": 0.0,
+        "attn_drop_rate": 0.0,
+        "drop_path_rate": 0.1,
+        "patch_norm": true,
+        "layer_norm_eps": 1e-05
+    }
+}

@@ -6,13 +6,14 @@ import sys
 
 # 定义全局变量
 def setup_global_var():
-    global base_dir, model_path, wd14_path, Transfer_path, global_config_path
+    global base_dir, model_path, wd14_path, Transfer_path, global_config_path, image_input_list_path
     base_dir = Path(__file__).resolve().parent
     model_path = base_dir / 'model'
     wd14_path = base_dir / 'wd14_tagger_api'
     Transfer_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv'
     global_config_path = base_dir / 'config.ini'
     sys.path.append(str(wd14_path))  # 添加wd1.4路径
+    image_input_list_path = base_dir / 'image_list.txt'
 
 # 更新程序
 def update_program():
@@ -85,7 +86,7 @@ def build_model_list():
 def main():
     # 配置全局参数
     setup_global_var()
-
+    '''
     # 检查更新
     update_program()
 
@@ -105,6 +106,23 @@ def main():
     from start_wd14 import start_server
     start_server(global_app_config) 
     print(f"正在启动服务器，请稍候...")
+    '''
+    # 获取图片路径列表
+    with image_input_list_path.open(mode = 'r', encoding='utf-8') as f:
+        img_input_list = f.read().splitlines()
+        img_input_json_path = [os.path.join(os.path.dirname(path), 'metadata.json') for path in img_input_list]
+
+    # 传入参数到wd1.4
+    from wd14_tagger_api import send_to_server  # 假设wd1.4服务器有一个send_to_server函数
+
+    for img_path in img_input_list:
+        try:
+            # 将图片路径传入wd1.4服务器
+            response = send_to_server(img_path)
+            print(f"图片 {img_path} 已成功传入服务器，响应: {response}")
+        except Exception as e:
+            print(f"传入图片 {img_path} 时出错: {e}")
+    # 加载img2tag.py
 
 if __name__ == "__main__":
     main()

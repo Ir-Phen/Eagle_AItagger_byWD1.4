@@ -10,9 +10,14 @@ def setup_global_var():
     base_dir = Path(__file__).resolve().parent
     model_path = base_dir / 'model'
     wd14_path = base_dir / 'wd14_tagger_api'
-    Transfer_path = base_dir / 'Tags-zh(ver1.0).csv'
+    Transfer_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv'
     global_config_path = base_dir / 'config.ini'
     sys.path.append(str(wd14_path))  # 添加wd1.4路径
+
+# 更新程序
+def update_program():
+    import updata
+    updata.update_program()
 
 # 读取配置文件
 def read_config(global_config_path):
@@ -78,15 +83,20 @@ def build_model_list():
 
 # 主函数
 def main():
+    # 配置全局参数
     setup_global_var()
+
+    # 检查更新
+    update_program()
+
     # 运行依赖检查
     # 运行硬件检查
 
-    # 生成模型列表
+    # 生成模型列表 over
     build_model_list()
     os.environ["MODEL_LIST"] = json.dumps(build_model_list()) # 将模型列表转换为JSON字符串并存储在环境变量中
     
-    # 读取配置文件
+    # 读取配置文件 over
     global_app_config = read_config(global_config_path)
     print(f'全局配置文件：{global_app_config}')
     

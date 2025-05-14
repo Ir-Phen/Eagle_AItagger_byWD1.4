@@ -95,7 +95,6 @@ def read_img_json_data(img_input_info, img_input_json_path):
 # 读取config初始化wd14配置
 
 # 将img_list_info传入wd14
-    # 更改selected.csv是否能直接生成中文tag？
 class WD14Tagger:
     # 接受imgcsv的数据
     def a():

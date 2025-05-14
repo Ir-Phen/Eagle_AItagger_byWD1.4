@@ -3,75 +3,66 @@ import json
 import os
 from pathlib import Path
 import sys
+import torch
+import psutil
 
 # 定义全局变量
 def setup_global_var():
-    global base_dir, model_path, wd14_path, Transfer_path, global_config_path, image_input_list_path
-    base_dir = Path(__file__).resolve().parent
-    model_path = base_dir / 'model'
-    wd14_path = base_dir / 'wd14_tagger_api'
-    Transfer_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv'
-    global_config_path = base_dir / 'config.ini'
-    sys.path.append(str(wd14_path))  # 添加wd1.4路径
-    image_input_list_path = base_dir / 'image_list.txt'
+    global base_dir, model_path, TagsDic_path, global_config_path, image_input_list_path, requirements_path
+    base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径
+    model_path = base_dir / 'model' # 模型路径
+    TagsDic_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv' # tag字典路径
+    global_config_path = base_dir / 'config.ini' # 全局配置文件路径
+    image_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径
+    requirements_path = base_dir / 'requirements.txt' # 依赖路径
 
-# 更新程序
-def update_program():
-    import updata
-    updata.update_program()
+# 配置文件类
+class Config:
+    # 读取配置文件
+    @staticmethod
+    def read_config(global_config_path):
+        global_config = ConfigParser()
+        global_config.read(global_config_path, encoding="utf-8")
+        return global_config
 
-# 读取配置文件
-def read_config(global_config_path):
-    global_config = ConfigParser()
-    global_config.read(global_config_path, encoding="utf-8")
-    return global_config
+    # 从配置文件中获取参数
+    @staticmethod
+    def get_config_param(global_config, section, option, default=None):
+        try:
+            if global_config.has_option(section, option):
+                return global_config.get(section, option)
+            else:
+                return default
+        except Exception as e:
+            print(f"读取配置参数 [{section}] {option} 时出错: {e}")
+            return default
 
-# 检查model_path下的sw_jax_cv_config.json文件
-# 读取model_name的值，获取同级onxx模型文件
-# 建构列表[model_name, onnx_model_path]
+    # 配置config.ini的参数
+    @staticmethod
+    def config_ini(global_config):
+        global_config = Config.read_config(global_config_path)
+
+        # 从get_config_param函数获取model类的参数model_name
+        model_name = Config.get_config_param(global_config, "Model", "model_name", "None")
+        # 从get_config_param函数获取model类的参数model_path
+        model_path = Config.get_config_param(global_config, "Model", "model_path", "None")
+        print(f"模型名称: {model_name}")
+        print(f"模型路径: {model_path}")
+        # 其他参数可以类似获取
+
+# 获取模型列表
 def build_model_list():
     model_list = []
-    for subdir in os.listdir(model_path):
-        subdir_full = os.path.join(model_path, subdir)
-        if os.path.isdir(subdir_full):
-            model_config_path = os.path.join(subdir_full, 'sw_jax_cv_config.json')
-            # 检查配置文件是否存在
-            if os.path.isfile(model_config_path):
-                try:
-                    # 读取JSON配置文件
-                    with open(model_config_path, 'r') as f:
-                        model_config = json.load(f)
-                        model_name = model_config.get('model_name')
-                        if model_name:
-                            # 查找所有ONNX文件
-                            onnx_files = [
-                                f for f in os.listdir(subdir_full)
-                                if f.lower().endswith('.onnx') 
-                                and os.path.isfile(os.path.join(subdir_full, f))
-                            ]
-                            # 为每个ONNX文件添加条目
-                            for onnx_file in onnx_files:
-                                onnx_path = os.path.join(subdir_full, onnx_file)
-                                model_list.append([model_name, onnx_path])
-                except Exception as e:
-                    print(f"处理配置文件 {model_config_path} 时出错: {e}")
+    # 遍历model_path下的所有文件查找onnx
+    for file in model_path.glob('*.onnx'):
+        model_name = file.stem
+        onnx_model_path = model_path / f"{model_name}.onnx"
+        model_list.append([model_name, onnx_model_path])
     print(f'模型列表：{model_list}')
     return model_list
 
-# def从"依赖检查.py"检测运行环境
+# 获取硬件参数
 
-    # else# 配置wd1.4运行环境 
-
-# def获取硬件参数
-    # 检查gpu
-        # 检查显存
-        # 检查型号
-    # 检查cpu
-        # 检查核心数、线程数
-    # 检查内存容量
-
-# def配置服务器参数
-    # 是否汉化tag
 # 从txt传入生产路径列表
 # 解析路径
     #图片类
@@ -86,43 +77,101 @@ def build_model_list():
 def main():
     # 配置全局参数
     setup_global_var()
-    '''
+
+    # 调用check_package.py检查依赖
+    from check_package import check_package
+    package_checker = check_package() # 创建check_package实例
+    fastest_source = package_checker.test_source_speed(package_checker.sources) # 测试源速度
+    package_checker.set_pip_source(fastest_source) # 设置pip源
+    requirements = package_checker.read_requirements(package_checker.requirements_path) # 读取requirements.txt文件
+    package_checker.check_and_install_dependencies(requirements) # 检查并安装依赖项
+
     # 检查更新
-    update_program()
+    from updata import VersionChecker
+    VersionChecker.update_program()
 
-    # 运行依赖检查
-    # 运行硬件检查
-
+    # 运行硬件检查,自动配置config
+        # 如果config中硬件信息为空,运行check_hardware
     # 生成模型列表 over
     build_model_list()
     os.environ["MODEL_LIST"] = json.dumps(build_model_list()) # 将模型列表转换为JSON字符串并存储在环境变量中
     
     # 读取配置文件 over
-    global_app_config = read_config(global_config_path)
+    global_app_config = Config.read_config(global_config_path)
     print(f'全局配置文件：{global_app_config}')
     
-    # 启动wd1.4服务
-    # 获取服务器配置
-    from start_wd14 import start_server
-    start_server(global_app_config) 
-    print(f"正在启动服务器，请稍候...")
-    '''
     # 获取图片路径列表
     with image_input_list_path.open(mode = 'r', encoding='utf-8') as f:
         img_input_list = f.read().splitlines()
         img_input_json_path = [os.path.join(os.path.dirname(path), 'metadata.json') for path in img_input_list]
 
-    # 传入参数到wd1.4
-    from wd14_tagger_api import send_to_server  # 假设wd1.4服务器有一个send_to_server函数
+    # interrogators.py：预定义可用模型实例。
+    # image.py：未直接使用（代码中未调用resize_image）。
+    # dbimutils.py：提供图像预处理工具函数。
+    # interrogator.py：实现模型加载、推理和后处理逻辑。
+    # 将依次读取图像路径，转化为PIL图像对象
+    '''
+    ### **关键变量**
+1. **`image: Image.Image`**
+    - 输入图像对象（PLPIL格式），通过`Image.open`加载。
+2. **`model_name`**
+    - 模型名称（如`wd14-convnextv2.v1`），决定使用的预训练模型。
+3. **`threshold`**
+    - 置信度阈值（默认`0.35`），过滤低置信度标签。
+4. **`device`**
+    - 设备类型（`"cpu"`或`"cuda"`），控制模型推理的计算设备。
+5. **`interrogator`**
+    - 模型实例（如`WaifuDiffusionInterrogator`或`MLDanbooruInterrogator`），负责推理和标签生成。
+6. **`tags`**
+    - 模型输出的原始标签置信度字典（`Dict[str, float]`），包含所有标签及其置信度。
+7. **`confidents`**
+    - 模型推理输出的置信度数组（`numpy.ndarray`），包含所有标签的原始预测值。
+### **关键函数**
+1. **`ImageTagger.image_interrogate()`**
+    - 入口函数：接收图像路径，调用模型推理和后处理。
+    - 流程：
+        - `Image.open`加载图像 → `interrogator.interrogate()`推理 → `postprocess_tags()`后处理。
+2. **`Interrogator.interrogate()`**
+    - 模型推理核心逻辑（分两类实现）：
+        - **`WaifuDiffusionInterrogator`**：
+            - 使用`dbimutils.make_square`和`dbimutils.smart_resize`调整图像尺寸。
+            - 调用ONNX模型推理，输出`ratings`和`tags`。
+        - **`MLDanbooruInterrogator`**：
+            - 使用`dbimutils.fill_transparent`和`dbimutils.resize`预处理图像。
+            - 调用ONNX模型推理，输出`tags`。
+3. **`dbimutils`工具函数**
+    - `fill_transparent()`：填充透明背景为白色。
+    - `make_square()`：将图像填充为正方形。
+    - `smart_resize()`：按目标尺寸缩放图像。
+    - `smart_24bit()`：将图像统一为24位BGR格式。
+4. **`Interrogator.postprocess_tags()`**
+    - 标签后处理逻辑：
+        - 按阈值过滤低置信度标签。
+        - 按字母顺序或置信度排序。
+        - 替换下划线、添加置信度权重、转义特殊字符等。
+5. **模型加载函数**
+    - `WaifuDiffusionInterrogator.load()`：从HuggingFace Hub下载并加载ONNX模型。
+    - `MLDanbooruInterrogator.load()`：加载JSON标签文件及模型。
+    '''
+        # image.py 的 Image.open()方法,将路径加载为PIL对象
+    # 调用 进行图像预处理
+        # dbimage.py 调整
+    # 调用 进行图像标注
+        # interrogators.py的interrogate()方法调用onnx模型
+    # tag后处理
+        # postprocess_tags()方法
+    # 输出tag结果
+        # dict[str, float]类型 
+    # 生成csv文件
 
-    for img_path in img_input_list:
-        try:
-            # 将图片路径传入wd1.4服务器
-            response = send_to_server(img_path)
-            print(f"图片 {img_path} 已成功传入服务器，响应: {response}")
-        except Exception as e:
-            print(f"传入图片 {img_path} 时出错: {e}")
-    # 加载img2tag.py
+    # 翻译tag
+
+    # tag迁移到metadata.json
+
+
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+    # 配置全局变量
+    setup_global_var()

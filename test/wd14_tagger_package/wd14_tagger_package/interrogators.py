@@ -47,7 +47,6 @@ interrogators: Dict[str, Interrogator] = {
         'WD14 SwinV2 v3',
         # again misleading name
         repo_id='SmilingWolf/wd-v1-4-swinv2-tagger-v3',
-        
         model_path='model.onnx'
     )
 }

@@ -5,7 +5,7 @@ import configparser  # 新增：用于解析config.ini文件
 import argparse
 
 # GitHub仓库配置
-GITHUB_REPO_URL = "https://api.github.com/repos/{owner}/{repo}/contents/version_info.md"
+GITHUB_REPO_URL = ""
 GITHUB_OWNER = "your_username"
 GITHUB_REPO = "your_repository"
 

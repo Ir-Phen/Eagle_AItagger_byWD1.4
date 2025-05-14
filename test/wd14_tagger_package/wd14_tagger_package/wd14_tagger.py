@@ -3,17 +3,16 @@ from PIL import Image
 from pathlib import Path
 
 from wd14_tagger_api.tagger.interrogators import interrogators
+# 从全局配置文件获取参数配置
 
 class ImageTagger:
-    def __init__(self, model_name='wd14-convnextv2.v1', threshold=0.35,device="cpu"):
+    def __init__(self, model_name= None, threshold=0.5,device="gpu"):
         self.threshold = threshold
         self.device = device
         self.load_model(model_name)
 
     def load_model(self, model_name):
-        """
-        Loads the selected model.
-        """
+        # 从config获取选择的模型，将模型加载到内存中。
         if model_name in interrogators.keys():
             self.model_name = model_name
             self.interrogator = interrogators[model_name]

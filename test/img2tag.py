@@ -3,13 +3,13 @@ from pathlib import Path
 from wd14_tagger_package import ImageTagger
 from configparser import ConfigParser
 
-# 假设已经定义了全局变量 base_dir, wd14_path, Transfer_path, global_config_path, image_input_list_path
+# 假设已经定义了全局变量 base_dir, wd14_path, Transfer_path, global_config_path, img_input_list_path
 
 base_dir = Path(__file__).resolve().parent
 wd14_path = base_dir / 'wd14_tagger_api'
 Transfer_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv'
 global_config_path = base_dir / 'config.ini'
-image_input_list_path = base_dir / 'image_list.txt'
+img_input_list_path = base_dir / 'image_list.txt'
 
 def process_images_with_wd14_tagger():
     """
@@ -30,10 +30,10 @@ def process_images_with_wd14_tagger():
 
     # 获取图片路径列表
     try:
-        with image_input_list_path.open(mode='r', encoding='utf-8') as f:
+        with img_input_list_path.open(mode='r', encoding='utf-8') as f:
             img_input_list = [line.strip() for line in f if line.strip()]
     except FileNotFoundError:
-        print(f"图片列表文件 {image_input_list_path} 未找到")
+        print(f"图片列表文件 {img_input_list_path} 未找到")
         return
     except Exception as e:
         print(f"读取图片列表文件时出错：{e}")
@@ -48,7 +48,7 @@ def process_images_with_wd14_tagger():
 
         try:
             # 对图片进行标签生成
-            tags = tagger.image_interrogate(img_path)
+            tags = tagger.img_interrogate(img_path)
 
             # 输出标签结果
             print(f"图片 {img_path} 的标签：")

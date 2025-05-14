@@ -2,19 +2,18 @@ from configparser import ConfigParser
 import json
 import os
 from pathlib import Path
-import sys
-import torch
-import psutil
+import csv
 
 # 定义全局变量
 def setup_global_var():
-    global base_dir, model_path, TagsDic_path, global_config_path, image_input_list_path, requirements_path
+    global base_dir, model_path, TagsDic_path, global_config_path, img_input_list_path, requirements_path, img_info_csv_path
     base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径
     model_path = base_dir / 'model' # 模型路径
     TagsDic_path = base_dir / 'csv' / 'Tags-cn(ver1.0,2023).csv' # tag字典路径
     global_config_path = base_dir / 'config.ini' # 全局配置文件路径
-    image_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径
+    img_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径
     requirements_path = base_dir / 'requirements.txt' # 依赖路径
+    img_info_csv_path = base_dir / 'image_info.csv'  # 图像信息字典路径
 
 # 配置文件类
 class Config:
@@ -63,15 +62,55 @@ def build_model_list():
 
 # 获取硬件参数
 
-# 从txt传入生产路径列表
-# 解析路径
-    #图片类
-    # 传入wd1.4
-    # 生成标注提示文件
-    # 配置多线程池，从完成列表生产新图片路径
-    # 从新图片路径打开txt与metajson
-    # 对比tag，差异度新增
-    # 删除临时文件
+# 从txt传入图像路径列表
+def get_img_list_info(img_input_list_path):
+    with img_input_list_path.open(mode = 'r', encoding='utf-8') as f:
+        img_input_info = [Path(line.strip()).resolve() for line in f if line.strip()]
+        img_input_json_path = [path.parent / 'metadata.json' for path in img_input_info]
+        return img_input_json_path, img_input_info
+    
+# 读取图像json并创建一个数据库
+def read_img_json_data(img_input_info, img_input_json_path):
+        with img_info_csv_path.open(mode='w', encoding='utf-8', newline='') as csvfile:
+            csv_writer = csv.writer(csvfile)
+            # 写入CSV文件的表头
+            csv_writer.writerow(['id', 'name', 'annotation', 'old_tags', 'new_tags', 'new_tags_cn', 'image_path', 'json_path'])
+        for img_path, json_path in zip(img_input_info, img_input_json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as json_file:
+                    img_json_data = json.load(json_file)
+                    # 提取所需字段
+                    img_id = img_json_data.get('id', '')
+                    img_name = img_json_data.get('name', '')
+                    annotations = img_json_data.get('annotations', '')
+                    old_tags = img_json_data.get('tag', '')
+                # 写入CSV文件
+                with img_info_csv_path.open(mode='a', encoding='utf-8', newline='') as csvfile:
+                    csv_writer = csv.writer(csvfile)
+                    csv_writer.writerow([img_id, img_name, annotations, old_tags, '', '', img_path, json_path])
+            except Exception as e:
+                print(f"读取JSON文件 {json_path} 时出错: {e}")
+        print(f"图像信息已保存到 {img_info_csv_path}")
+
+# 读取config初始化wd14配置
+
+# 将img_list_info传入wd14
+    # 更改selected.csv是否能直接生成中文tag？
+class WD14Tagger:
+    # 接受imgcsv的数据
+    def a():
+        return
+    def a():
+        tag_wd14_export = []
+        wd14_export = [id,r'new_tag']
+        return wd14_export
+
+# 将tag写入csv
+def new_tag_into_csv(wd14_export):
+    return
+# 翻译tag
+# 将csv的值迁移到json，为anno添加已AI生成标签（配置可选）
+# 清除imgcsv的数据（配置可选）
 
 # 主函数
 def main():
@@ -88,6 +127,7 @@ def main():
 
     # 检查更新
     from updata import VersionChecker
+
     VersionChecker.update_program()
 
     # 运行硬件检查,自动配置config
@@ -100,11 +140,14 @@ def main():
     global_app_config = Config.read_config(global_config_path)
     print(f'全局配置文件：{global_app_config}')
     
-    # 获取图片路径列表
-    with image_input_list_path.open(mode = 'r', encoding='utf-8') as f:
-        img_input_list = f.read().splitlines()
-        img_input_json_path = [os.path.join(os.path.dirname(path), 'metadata.json') for path in img_input_list]
+    img_list_info = get_img_list_info(img_input_list_path)
+    print(f"图片路径列表：{img_list_info}")
+    
+    # 新增调用
+    img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
+    read_img_json_data(img_input_info, img_input_json_path) 
 
+    
     # interrogators.py：预定义可用模型实例。
     # image.py：未直接使用（代码中未调用resize_image）。
     # dbimutils.py：提供图像预处理工具函数。
@@ -127,7 +170,7 @@ def main():
 7. **`confidents`**
     - 模型推理输出的置信度数组（`numpy.ndarray`），包含所有标签的原始预测值。
 ### **关键函数**
-1. **`ImageTagger.image_interrogate()`**
+1. **`ImageTagger.img_interrogate()`**
     - 入口函数：接收图像路径，调用模型推理和后处理。
     - 流程：
         - `Image.open`加载图像 → `interrogator.interrogate()`推理 → `postprocess_tags()`后处理。
@@ -175,3 +218,7 @@ if __name__ == "__main__":
     # main()
     # 配置全局变量
     setup_global_var()
+    # 使用img_input_list_path，打印返回的列表
+    img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
+    read_img_json_data(img_input_info, img_input_json_path)  # 新增调用
+    

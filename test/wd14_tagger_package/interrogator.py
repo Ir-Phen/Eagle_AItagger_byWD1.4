@@ -1,5 +1,6 @@
 import pandas as pd
-from typing import List, Dict
+from typing import Tuple, List, Dict
+from PIL import Image
 from pathlib import Path
 import re
 import json

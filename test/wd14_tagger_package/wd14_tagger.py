@@ -1,40 +1,53 @@
-from wd14_tagger_package.interrogator import Interrogator
-
 from PIL import Image
 from pathlib import Path
-from wd14_tagger_package.interrogators import interrogators
-
-# 从全局配置文件获取参数配置
 
 class ImageTagger:
-    def __init__(self, model_name= None, threshold=0.5,device="gpu"):
-        self.threshold = threshold #置信度，过滤标签
-        self.device = device # 推理设备 
-        self.load_model(model_name) # 模型名称
+    def __init__(
+        self, 
+        model_name: str,
+        model_path: str,  # 新增模型路径参数
+        tags_path: str,   # 新增标签路径参数
+        threshold=0.5,
+        device="cpu"
+    ):
+        self.threshold = threshold
+        self.device = device
+        self.model_name = model_name
+        self.model_path = Path(model_path)
+        self.tags_path = Path(tags_path)
+        self.interrogator = None  # 延迟初始化
+        self.load_model()  # 直接加载模型
 
-    def load_model(self, model_name):
-        # 从config获取选择的模型，将模型加载到内存中。
-        if model_name in interrogators.keys():
-            self.model_name = model_name
-            self.interrogator = interrogators[model_name]
-            self.interrogator.use_cpu = self.device == "cpu"
-        else:
-            raise ValueError(f"Model {model_name} not available.")
+    def load_model(self):
+        """根据模型类型创建对应的Interrogator实例"""
+        from wd14_tagger_package.interrogator import WaifuDiffusionInterrogator, MLDanbooruInterrogator
 
-    def change_model(self, new_model_name):
-        # 改变加的模型
-        print(f"Changing model from {self.model_name} to {new_model_name}")
-        self.load_model(new_model_name)
+        self.interrogator = WaifuDiffusionInterrogator(
+            name=self.model_name,
+            model_path=self.model_path,
+            tags_path=self.tags_path
+        )
+
+        # 设置计算设备
+        self.interrogator.use_cpu = (self.device == "cpu")
+        self.interrogator.load()
+        print(f"Successfully loaded {self.model_name}")
 
     def image_interrogate(self, image_path: Path):
-        # 对图像路径执行预测。
+        """执行图像标注"""
+        if not self.interrogator:
+            raise RuntimeError("Model not loaded")
+
         im = Image.open(image_path)
-        result = self.interrogator.interrogate(im, self.device)
-        return self.interrogator.postprocess_tags(result[1], threshold=self.threshold)
+        _, tag_confidents = self.interrogator.interrogate(im, self.device)
+        return self.interrogator.postprocess_tags(
+            tag_confidents,
+            threshold=self.threshold,
+            replace_underscore=True
+        )
 
-def process_file(self, file_path):
-    tags = self.image_interrogate(Path(file_path))
-    print("\nDetected Tags:", ", ".join(tags.keys()))
-
-if __name__ == "__main__":
-    True
+    def unload(self):
+        """显式卸载模型"""
+        if self.interrogator:
+            return self.interrogator.unload()
+        return False

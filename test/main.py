@@ -1,6 +1,5 @@
 from pathlib import Path
 import json
-import os
 import pandas
 
 # 定义全局变量
@@ -13,19 +12,6 @@ def setup_global_var():
     img_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径
     requirements_path = base_dir / 'requirements.txt' # 依赖路径
     img_info_csv_path = base_dir / 'image_info.csv'  # 图像信息字典路径
-
-# 获取模型列表
-def build_model_list():
-    model_list = []
-    # 遍历model_path下的所有文件查找onnx
-    for file in model_path.glob('*.onnx'):
-        model_name = file.stem
-        onnx_model_path = model_path / f"{model_name}.onnx"
-        model_list.append([model_name, onnx_model_path])
-    print(f'模型列表：{model_list}')
-    return model_list
-
-# 获取硬件参数
 
 # 从txt传入图像路径列表
 def get_img_list_info(img_input_list_path):
@@ -69,23 +55,6 @@ def read_img_json_data(img_input_info, img_input_json_path):
     print(f"图像信息已保存到 {img_info_csv_path}")
     return img_info_dataframe
 
-# 读取config初始化wd14配置
-
-# 将img_list_info传入wd14
-class WD14Tagger:
-    
-    def a():
-        tag_wd14_export = []
-        wd14_export = [id,r'new_tag']
-        return wd14_export
-
-# 将tag写入csv
-def new_tag_into_csv(wd14_export):
-    return
-# 翻译tag
-# 将csv的值迁移到json，为anno添加已AI生成标签（配置可选）
-# 清除imgcsv的数据（配置可选）
-
 # 主函数
 def main():
     # 配置全局参数
@@ -93,70 +62,58 @@ def main():
 
     # 调用check_package.py检查依赖
     from check_package import check_package
-    package_checker = check_package() # 创建check_package实例
-    fastest_source = package_checker.test_source_speed(package_checker.sources) # 测试源速度
-    package_checker.set_pip_source(fastest_source) # 设置pip源
-    requirements = package_checker.read_requirements(package_checker.requirements_path) # 读取requirements.txt文件
-    package_checker.check_and_install_dependencies(requirements) # 检查并安装依赖项
+    check_package(requirements_path)
+
 
     # 检查更新
-    from updata import VersionChecker
-    VersionChecker.update_program()
+    # from check_updata import VersionChecker
+    # print("检查更新中")
+    # VersionChecker.update_program()
 
-    # 运行硬件检查,自动配置config
-        # 如果config中硬件信息为空,运行check_hardware
-
-    # 生成模型列表 over
-    build_model_list()
-    os.environ["MODEL_LIST"] = json.dumps(build_model_list()) # 将模型列表转换为JSON字符串并存储在环境变量中
-    
     # 获取待处理图片路径
     img_list_info = get_img_list_info(img_input_list_path)
     print(f"图片路径列表：{img_list_info}")
     
     # 创建待处理图片的信息数据库
     img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
-    read_img_json_data(img_input_info, img_input_json_path) 
+    img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path)
 
-if __name__ == "__main__":
-    # main()
+    # 读取config初始化wd14配置
+    from Config import Config
+    config = Config(global_config_path)
+    config.global_config = config.read_config(global_config_path)
+    model_name = config.get_config_data("Model", "model_name")
+    print(f'模型名称：{model_name}')
+    model_path = config.get_config_data("Model", "model_path")
+    print(f'模型路径：{model_path}')
+    device = config.get_config_data("Model", "device")
+    print(f'推理设备：{device}')
+    threshold = float(config.get_config_data("Model", "threshold"))
+    print(f'标签置信度：{threshold}')
 
-    # 配置全局变量
-    setup_global_var()
-
-    # 使用img_input_list_path，打印返回的列表
-    img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
-    img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path)  # 新增调用
+    # 创建wd14实例
+    from wd14_tagger_package.wd14_tagger import ImageTagger
+    tagger = ImageTagger(
+    model_name=model_name,
+    threshold=threshold,
+    device=device
+    )
     
-    '''
-    WD14处理模块
-    '''
-    # 接受imgcsv的数据
-    id_image_path_list = img_info_dataframe[['id', 'image_path']].values.tolist()
-    print(f"调试{id_image_path_list}")
-
-
-'''
-    # 将图片路径加载为PIL对象
-    from img2tag import WD14Tagger
-    image_objects = WD14Tagger.image_PIL(id_image_path_list)
-
-    # 使用WD14Tagger处理图像对象并生成新标签
-    new_tag_fromWD14 = []
-    for image_path, image in image_objects:
+    # 处理每个图像并获取新标签
+    print("\n开始处理图像标签...")
+    for index, row in img_info_dataframe.iterrows():
+        image_path = Path(row['image_path'])
         try:
-            # 假设WD14Tagger有一个方法process_image返回新标签
-            new_tags = WD14Tagger.process_image(image)
-            new_tag_fromWD14.append((image_path, new_tags))
+            # 调用 WD14 处理图像
+            tags = tagger.image_interrogate(image_path)
+            # 将标签列表转换为字符串
+            tag_list = list(tags.keys())
+            img_info_dataframe.at[index, 'new_tags'] = ', '.join(tag_list)
+            print(f"已处理：{image_path} -> 发现 {len(tag_list)} 个标签")
         except Exception as e:
-            print(f"处理图像 {image_path} 时出错: {e}")
-
-    # 将新标签写入 DataFrame
-    for image_path, new_tags in new_tag_fromWD14:
-        # 找到对应的行并更新 new_tags 列
-        img_info_dataframe.loc[img_info_dataframe['image_path'] == image_path, 'new_tags'] = ', '.join(new_tags)
-
-    # 读取Tags-cn(ver1.0,2023).csv的数据
+            print(f"处理失败：{image_path} | 错误：{str(e)}")
+    
+     # 读取Tags-cn(ver1.0,2023).csv的数据
     tags_cn_df = pandas.read_csv(TagsDic_path, encoding='utf-8')
     # 创建一个字典用于快速查找标签对应的中文值
     tags_cn_dict = dict(zip(tags_cn_df['name'], tags_cn_df['right_tag_cn']))
@@ -186,4 +143,47 @@ if __name__ == "__main__":
                 json.dump(json_data, json_file, ensure_ascii=False, indent=4)
         except Exception as e:
             print(f"更新JSON文件 {json_path} 时出错: {e}")
-            '''
+
+
+if __name__ == "__main__":
+    # 配置全局参数
+    setup_global_var()
+
+    # 获取待处理图片路径
+    img_list_info = get_img_list_info(img_input_list_path)
+    print(f"图片路径列表：{img_list_info}")
+    
+    # 创建待处理图片的信息数据库
+    img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
+    img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path)
+    
+    # 读取config初始化wd14配置
+    from Config import Config
+    config = Config(global_config_path)
+    config.global_config = config.read_config(global_config_path)
+    model_name = config.get_config_data("Model", "model_name")
+    print(f'模型名称：{model_name}')
+    model_path = config.get_config_data("Model", "model_path")
+    print(f'模型路径：{model_path}')
+    device = config.get_config_data("Model", "device")
+    print(f'推理设备：{device}')
+    threshold = float(config.get_config_data("Model", "threshold"))
+    print(f'标签置信度：{threshold}')
+
+    # 创建wd14实例
+    from wd14_tagger_package.wd14_tagger import ImageTagger
+    tagger = ImageTagger(model_name=model_name, threshold=threshold, device=device)
+    
+    # # 处理每个图像并获取新标签
+    # print("\n开始处理图像标签...")
+    # for index, row in img_info_dataframe.iterrows():
+    #     image_path = Path(row['image_path'])
+    #     try:
+    #         # 调用 WD14 处理图像
+    #         tags = tagger.image_interrogate(image_path)
+    #         # 将标签列表转换为字符串
+    #         tag_list = list(tags.keys())
+    #         img_info_dataframe.at[index, 'new_tags'] = ', '.join(tag_list)
+    #         print(f"已处理：{image_path} -> 发现 {len(tag_list)} 个标签")
+    #     except Exception as e:
+    #         print(f"处理失败：{image_path} | 错误：{str(e)}")

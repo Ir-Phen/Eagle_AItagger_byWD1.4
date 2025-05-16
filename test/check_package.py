@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 import pkg_resources
 
-class check_package:
+class package_manage:
     def __init__(self,requirements_path = None):
         self.sources = {
         "官方源": "https://pypi.org/simple/"
@@ -53,7 +53,6 @@ class check_package:
     @staticmethod
     def read_requirements(file_path):
         '''读取requirements.txt文件'''
-        print(f"正在读取文件: {file_path}")
         try:
             with open(file_path, 'r', encoding='utf-8') as file:
                 requirements = file.read().splitlines()
@@ -63,32 +62,39 @@ class check_package:
             return []
     
     @staticmethod
-    def check_and_install_dependencies(requirements):
-        '''检查并安装依赖项'''
+    def check_dependencies(requirements):
+        '''检查依赖项是否已安装'''
+        missing_dependencies = []
         for requirement in requirements:
             try:
                 pkg_resources.require(requirement)
-                print(f"依赖已安装: {requirement}")
             except pkg_resources.DistributionNotFound:
-                print(f" {requirement}，正在尝试安装...")
-                try:
-                    subprocess.check_call([sys.executable, "-m", "pip", "install", requirement])
-                    print(f"成功安装: {requirement}")
-                except subprocess.CalledProcessError as e:
-                    print(f"安装 {requirement} 失败: {e}")
+                print(f"缺少依赖: {requirement}")
+                missing_dependencies.append(requirement)
+        return missing_dependencies
+
+    def install_dependencies(missing_dependencies):
+        '''安装缺失的依赖项'''
+        for requirement in missing_dependencies:
+            print(f"正在尝试安装: {requirement}...")
+            try:
+                subprocess.check_call([sys.executable, "-m", "pip", "install", requirement])
+                print(f"成功安装: {requirement}")
+            except subprocess.CalledProcessError as e:
+                print(f"安装 {requirement} 失败: {e}")
+
+def check_package(requirements_path):
+    package_checker = package_manage()  # 创建check_package实例
+    requirements = package_checker.read_requirements(package_checker.requirements_path)  # 读取requirements.txt文件
+    missing_dependencies = package_checker.check_dependencies(requirements)  # 检查依赖项是否已安装
+    if missing_dependencies:  # 如果有缺失的依赖项
+        fastest_source = package_checker.test_source_speed(package_checker.sources)  # 测试源速度
+        if fastest_source:
+            package_checker.set_pip_source(package_checker.sources[fastest_source])  # 设置pip源
+        package_checker.install_dependencies(missing_dependencies)  # 安装缺失的依赖项
+    else:
+        print("环境配置正常")
+    
 
 if __name__ == "__main__":
-    # 创建 check_package 实例
-    package_checker = check_package()
-    
-    # 测试源速度
-    fastest_source = package_checker.test_source_speed(package_checker.sources)
-    
-    # 设置pip源
-    package_checker.set_pip_source(fastest_source)
-    
-    # 读取 requirements.txt 文件
-    requirements = package_checker.read_requirements(package_checker.requirements_path)
-    
-    # 检查并安装依赖项
-    package_checker.check_and_install_dependencies(requirements)
+    check_package()

@@ -151,17 +151,21 @@ class TaggerService:
     """标签生成服务，合并了标签后处理逻辑"""
 
     def __init__(self, config_data: dict):
-        print("config_data:", config_data)  # 添加这行
+        print("config_data:", config_data)
         self.config_data = config_data
         self.interrogator = None
         # 合并后的标签处理逻辑参数
         self.model_path = Path(self.config_data.get('Model', 'model_path', fallback=None))
         self.tags_path = Path(self.config_data.get('Model', 'tags_path', fallback=None))
-        self.additional_tags =list[str](self.config_data.get('Tag', 'additional_tags', fallback=[]))
-        self.exclude_tags = list[str](self.config_data.get('Tag', 'exclude_tags', fallback=[]))
+        self.additional_tags =self.config_data.get('Tag', 'additional_tags', fallback=[])
+        
+        self.exclude_tags_str = self.config_data.get('Tag', 'exclude_tags', fallback=[])
+        self.exclude_tags = [tag.strip() for tag in self.exclude_tags_str.split(',') if tag.strip()]
+        print(self.exclude_tags)
+
         self.threshold = float(self.config_data.get('Tag', 'threshold', fallback=0.5))
         self.replace_underscore = bool(self.config_data.get('Tag', 'replace_underscore', fallback=True))
-        self.underscore_excludes = list[str](self.config_data.get('Tag', 'underscore_excludes', fallback=[]))
+        self.underscore_excludes = self.config_data.get('Tag', 'underscore_excludes', fallback=[])
         self.sort_alphabetically = bool(self.config_data.get('Tag', 'sort_alphabetically', fallback=False))
         self.escape_tags = bool(self.config_data.get('Tag', 'escape_tags', fallback=False))
         self.use_chinese_name = bool(self.config_data.get('Tag', 'use_chinese_name', fallback=False))
@@ -186,6 +190,8 @@ class TaggerService:
         """合并的标签处理方法"""
         # 强制标签处理（添加必备标签）
         tags = raw_tags.copy()  # 避免修改原始字典
+        print("Raw Tags:", tags.keys())
+
         if not self.additional_tags:
             pass
         else:
@@ -230,7 +236,7 @@ def on_interrogate(config_data: dict) -> TaggerService:
     return setup_tagger_service(config_data)
 
 if __name__ == "__main__":
-    raise
+    # raise
     import configparser
     config_data = configparser.ConfigParser()
     config_data.read(r'E:\GitHub\Eagle_AItagger_byWD1.4\config.ini', encoding='utf-8')

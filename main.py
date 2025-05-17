@@ -4,6 +4,7 @@ import pandas
 import configparser
 from Tagger import on_interrogate
 from check_package import check_package
+from check_updata import on_check_update
 
 # 从txt传入图像路径列表
 def get_img_list_info(img_input_list_path):
@@ -55,9 +56,15 @@ def main():
     requirements_path = base_dir / 'requirements.txt' # 依赖路径
     check_package(requirements_path)
 
-    # 检查更新
-    # print("检查更新中")
-    # VersionChecker.update_program()
+    # 读取config
+    global_config_path = base_dir / 'config.ini' # 全局配置文件路径
+    config_data = {}
+    config_data = configparser.ConfigParser()
+    config_data.read(global_config_path, encoding='utf-8')
+
+    # 更新代码版本
+    print("检查更新中")
+    on_check_update(config_data, global_config_path)
 
     # 获取待处理图片路径
     img_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径
@@ -67,13 +74,8 @@ def main():
     # 创建待处理图片的信息数据库
     img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
     img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path)
-
-    # 读取config初始化wd14配置
-    global_config_path = base_dir / 'config.ini' # 全局配置文件路径
-    config_data = {}
-    config_data = configparser.ConfigParser()
-    config_data.read(global_config_path, encoding='utf-8')
-    # 读取 Model 键的值，转换成绝对路径
+    
+    # 初始化wd14配置，读取 Model 键的值，转换成绝对路径
     model_path = config_data.get('Model', 'model_path')
     tags_path = config_data.get('Model', 'tags_path')
     if model_path:
@@ -144,5 +146,5 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
-    base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径
+    main()
+    # base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径

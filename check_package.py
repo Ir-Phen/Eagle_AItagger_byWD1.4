@@ -97,4 +97,5 @@ def check_package(requirements_path):
     
 
 if __name__ == "__main__":
-    check_package()
+    requirements_path = "E:\\GitHub\\Eagle_AItagger_byWD1.4\\requirements.txt"  # 或者你的 requirements.txt 文件的实际路径
+    check_package(requirements_path)

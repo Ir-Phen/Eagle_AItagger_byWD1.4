@@ -51,3 +51,4 @@ class VersionChecker:
         print(f"本地版本已更新为: {new_version}")
 
 if __name__ == "__main__":
+    raise

@@ -112,13 +112,10 @@ def main():
     # 根据 use_chinese_name 的值将标签写入对应的 JSON 文件
     for index, row in img_info_dataframe.iterrows():
         json_path = row['json_path']
-        print(json_path)
         if use_chinese_name is True:
             new_tags = row['new_tags_cn'].split(', ') if row['new_tags_cn'] else []
-            print(new_tags)
         else:
             new_tags = row['new_tags'].split(', ') if row['new_tags'] else []
-            print(new_tags)
         try:
             # 读取现有的JSON文件内容
             with open(json_path, 'r', encoding='utf-8') as json_file:
@@ -134,7 +131,6 @@ def main():
                     json_data['tags'] = new_tags
             else:
                 json_data['tags'] = new_tags
-            print(json_data)
         
             # 将更新后的内容写回JSON文件
             with open(json_path, 'w', encoding='utf-8') as json_file:
@@ -142,6 +138,11 @@ def main():
         except Exception as e:
             print(f"更新JSON文件 {json_path} 时出错: {e}")
 
+    processed_csv_path = base_dir / 'image_info.csv'
+    img_info_dataframe.to_csv(processed_csv_path, index=False, encoding='utf-8')
+    print(f"\n处理后的数据已保存到 {processed_csv_path}")
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+    base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径

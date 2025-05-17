@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, Tuple
 from PIL import Image, UnidentifiedImageError
 import pandas as pd
 import numpy as np
@@ -96,6 +96,7 @@ class WaifuDiffusionInterrogator:
 
     def load(self):
         """加载模型和标签"""
+
         self.model = InferenceSession(
             str(self.model_path),
             providers=['CUDAExecutionProvider', 'CPUExecutionProvider']
@@ -154,20 +155,20 @@ class TaggerService:
         self.config_data = config_data
         self.interrogator = None
         # 合并后的标签处理逻辑参数
-        self.additional_tags = self.config_data.get('Tag', 'additional_tags')
-        self.exclude_tags = self.config_data.get('Tag', 'exclude_tags')
-        self.threshold = self.config_data.get('Tag', 'threshold')
-        self.replace_underscore = self.config_data.get('Tag', 'replace_underscore')
-        self.underscore_excludes = self.config_data.get('Tag', 'underscore_excludes')
-        self.sort_alphabetically = self.config_data.get('Tag', 'sort_alphabetically')
-        self.escape_tags = self.config_data.get('Tag', 'escape_tags')
+        self.model_path = Path(self.config_data.get('Model', 'model_path', fallback=None))
+        self.tags_path = Path(self.config_data.get('Model', 'tags_path', fallback=None))
+        self.additional_tags =list[str](self.config_data.get('Tag', 'additional_tags', fallback=[]))
+        self.exclude_tags = list[str](self.config_data.get('Tag', 'exclude_tags', fallback=[]))
+        self.threshold = float(self.config_data.get('Tag', 'threshold', fallback=0.5))
+        self.replace_underscore = bool(self.config_data.get('Tag', 'replace_underscore', fallback=True))
+        self.underscore_excludes = list[str](self.config_data.get('Tag', 'underscore_excludes', fallback=[]))
+        self.sort_alphabetically = bool(self.config_data.get('Tag', 'sort_alphabetically', fallback=False))
+        self.escape_tags = bool(self.config_data.get('Tag', 'escape_tags', fallback=False))
+        self.use_chinese_name = bool(self.config_data.get('Tag', 'use_chinese_name', fallback=False))
         self.TAG_ESCAPE_PATTERN = re.compile(r'([\\()])')  # 保留正则模式
 
     def initialize_model(self):
         """模型初始化"""
-        self.model_path = self.config_data.get('Model', 'model_path')
-        self.tags_path = self.config_data.get('Model', 'tags_path')
-        self.use_chinese_name = self.config_data.get('Tag', 'use_chinese_name')
         self.interrogator = WaifuDiffusionInterrogator(self.model_path, self.tags_path, self.use_chinese_name, self.config_data)
         self.interrogator.load()
 
@@ -229,27 +230,16 @@ def on_interrogate(config_data: dict) -> TaggerService:
     return setup_tagger_service(config_data)
 
 if __name__ == "__main__":
-    # 测试读取标签文件
+    raise
     import configparser
-    config = configparser.ConfigParser()
-    config.read(r'E:\GitHub\Eagle_AItagger_byWD1.4\test\config.ini', encoding='utf-8')
-    config_data = {}
-    for section in config.sections():
-        config_data[section] = {}
-        for key, value in config.items(section):
-            config_data[section][key] = value  # 默认作为字符串读取
+    config_data = configparser.ConfigParser()
+    config_data.read(r'E:\GitHub\Eagle_AItagger_byWD1.4\config.ini', encoding='utf-8')
     image_path = r'E:\动画与设计资源库.library\images\MAQGISQ1ELX97.info\124956717_p0.png'
+
     tagger = setup_tagger_service(config_data)
 
-    # 在此处进行调试
     try:
         tags = tagger.process_single_image(Path(image_path))
         print("\nDetected Tags:", ", ".join(tags.keys()))
     except Exception as e:
         print(f"Tagging failed: {str(e)}")
-
-
-    # 插入调试点
-    import ipdb; ipdb.set_trace()  # 交互式调试点
-
-    # 模型会一直保持在内存中，直到程序结束

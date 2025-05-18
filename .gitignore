@@ -1,3 +1,4 @@
 
 *.onnx
 /myenv
+/__pycache__

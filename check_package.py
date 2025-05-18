@@ -1,5 +1,3 @@
-import time
-import requests
 import subprocess
 import sys
 from pathlib import Path
@@ -9,45 +7,11 @@ class package_manage:
     def __init__(self, requirements_path=None):
         self.sources = {
             "官方源": "https://pypi.org/simple/",
-            "中科大源": "https://mirrors.ustc.edu.cn/pypi/web/simple/",
-            "阿里云源": "https://mirrors.aliyun.com/pypi/simple/"
+            # "中科大源": "https://mirrors.ustc.edu.cn/pypi/web/simple/",
+            # "阿里云源": "https://mirrors.aliyun.com/pypi/simple/"
         }
         self.fastest_source = None
         self.requirements_path = requirements_path if requirements_path else Path(__file__).resolve().parent / 'requirements.txt'
-
-    def test_source_speed(self):
-        '''测试各个源的速度'''
-        fastest_source = None
-        fastest_time = float('inf')
-        
-        for source_name, source_url in self.sources.items():
-            start_time = time.time()
-            try:
-                response = requests.get(source_url, timeout=5)
-                if response.status_code == 200:
-                    elapsed_time = time.time() - start_time
-                    print(f"{source_name} 响应时间: {elapsed_time:.2f}秒")
-                    if elapsed_time < fastest_time:
-                        fastest_time = elapsed_time
-                        fastest_source = source_name
-            except requests.RequestException as e:
-                print(f"请求 {source_name} 失败: {e}")
-        
-        if fastest_source:
-            print(f"速度最快的源是: {fastest_source}")
-        else:
-            print("没有找到可用的源。")
-        self.fastest_source = fastest_source
-        return fastest_source
-
-    @staticmethod
-    def set_pip_source(source):
-        '''设置pip源'''
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "--index-url", source])
-            print(f"成功设置pip源: {source}")
-        except Exception as e: 
-            print(f"设置pip源失败: {e}")
 
     def read_requirements(self, file_path):
         '''读取requirements.txt文件'''
@@ -60,7 +24,7 @@ class package_manage:
             return []
 
     def install_dependencies(self, missing_dependencies, source=None):
-        """安装缺失的依赖项，可选指定源"""
+        """安装缺失的依赖项"""
         for requirement in missing_dependencies:
             print(f"正在安装: {requirement}...")
             try:

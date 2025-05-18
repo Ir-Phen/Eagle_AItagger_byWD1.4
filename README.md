@@ -102,35 +102,6 @@ add_write_mode：标签的写入模式，默认True为追加写入，Fasle为覆
 
     ./csv/selected_tags.csv
 
-## Eagel集成方案
+**引用**
 
-**JavaScript**
-
-```
-eagle.onSelectionChanged(async (items) => {
-    const selectedData = items.map(item => ({
-        path: item.path,
-        metadata: item.metadata
-    }));
-    // 将数据写入临时文件（如JSON）
-    const fs = require('fs');
-    fs.writeFileSync('/tmp/eagle_selected.json', JSON.stringify(selectedData));
-});
-```
-**Python**
-
-```
-def get_eagle_selection():
-    try:
-        with open('/tmp/eagle_selected.json', 'r') as f:
-            data = json.load(f)
-            return data
-    except FileNotFoundError:
-        return []
-while True:
-    selected_items = get_eagle_selection()
-    if selected_items:
-        print("当前选中项：", selected_items)
-        break
-    time.sleep(1)
-```
+代码核心模块前身： [秋叶lora训练器](https://github.com/Akegarasu/lora-scripts)

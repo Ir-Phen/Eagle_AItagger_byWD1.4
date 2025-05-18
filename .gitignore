@@ -2,3 +2,4 @@
 *.onnx
 /myenv
 /__pycache__
+/.vscode

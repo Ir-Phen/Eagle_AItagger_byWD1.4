@@ -157,18 +157,18 @@ class TaggerService:
         # 合并后的标签处理逻辑参数
         self.model_path = Path(self.config_data.get('Model', 'model_path', fallback=None))
         self.tags_path = Path(self.config_data.get('Model', 'tags_path', fallback=None))
-        self.additional_tags =self.config_data.get('Tag', 'additional_tags', fallback=[])
+        self.additional_tags =self.config_data.get('Tag', 'additional_tags', fallback='')
         
-        self.exclude_tags_str = self.config_data.get('Tag', 'exclude_tags', fallback=[])
+        self.exclude_tags_str = self.config_data.get('Tag', 'exclude_tags', fallback='')
         self.exclude_tags = [tag.strip() for tag in self.exclude_tags_str.split(',') if tag.strip()]
         print(self.exclude_tags)
 
-        self.threshold = float(self.config_data.get('Tag', 'threshold', fallback=0.5))
-        self.replace_underscore = bool(self.config_data.get('Tag', 'replace_underscore', fallback=True))
-        self.underscore_excludes = self.config_data.get('Tag', 'underscore_excludes', fallback=[])
-        self.sort_alphabetically = bool(self.config_data.get('Tag', 'sort_alphabetically', fallback=False))
-        self.escape_tags = bool(self.config_data.get('Tag', 'escape_tags', fallback=False))
-        self.use_chinese_name = bool(self.config_data.get('Tag', 'use_chinese_name', fallback=False))
+        self.threshold = self.config_data.getfloat('Tag', 'threshold', fallback=0.5)
+        self.replace_underscore = self.config_data.getboolean('Tag', 'replace_underscore', fallback=True)
+        self.underscore_excludes = self.config_data.get('Tag', 'underscore_excludes', fallback='')
+        self.sort_alphabetically = self.config_data.getboolean('Tag', 'sort_alphabetically', fallback=False)
+        self.escape_tags = self.config_data.getboolean('Tag', 'escape_tags', fallback=False)
+        self.use_chinese_name = self.config_data.getboolean('Tag', 'use_chinese_name', fallback=False)
         self.TAG_ESCAPE_PATTERN = re.compile(r'([\\()])')  # 保留正则模式
 
     def initialize_model(self):
@@ -190,7 +190,6 @@ class TaggerService:
         """合并的标签处理方法"""
         # 强制标签处理（添加必备标签）
         tags = raw_tags.copy()  # 避免修改原始字典
-        print("Raw Tags:", tags.keys())
 
         if not self.additional_tags:
             pass
@@ -198,11 +197,20 @@ class TaggerService:
             tags.update({tag: 1.0 for tag in self.additional_tags if tag not in tags})
 
         # 过滤和排序标签
-        if not self.exclude_tags:
-            filtered = {tag: conf for tag, conf in tags.items() if conf >= self.threshold}
-        else:
-            filtered = {tag: conf for tag, conf in tags.items() if conf >= self.threshold and tag not in self.exclude_tags}
+        filtered = {tag: conf for tag, conf in tags.items() if conf >= self.threshold}
 
+        if not self.exclude_tags:
+            pass
+        else:
+            filtered = {tag: conf for tag, conf in filtered.items() if tag not in self.exclude_tags}
+        
+        # 过滤非法字符
+        
+        filtered = {
+            tag: conf 
+            for tag, conf in filtered.items() 
+            if not any(c in tag for c in ['[', ']', ',', '(', ')', '\\'])  
+        }
         # 在排序处理中使用三元操作简化if逻辑
         sorted_tags = sorted(filtered.items(), key=lambda x: (-x[1], x[0]) if not self.sort_alphabetically else x[0])
 

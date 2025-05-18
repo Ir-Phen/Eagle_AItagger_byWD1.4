@@ -46,13 +46,13 @@ class package_manage:
         try:
             subprocess.check_call([sys.executable, "-m", "pip", "install", "--index-url", source])
             print(f"成功设置pip源: {source}")
-        except subprocess.CalledProcessError as e:
+        except Exception as e: 
             print(f"设置pip源失败: {e}")
 
     def read_requirements(self, file_path):
         '''读取requirements.txt文件'''
         try:
-            with open(file_path, 'r', encoding='utf-16') as file:
+            with open(file_path, 'r', encoding='utf-8') as file:
                 requirements = file.read().splitlines()
                 return [req.strip() for req in requirements if req.strip()]
         except FileNotFoundError:
@@ -69,7 +69,7 @@ class package_manage:
                     cmd.extend(["--index-url", source])
                 subprocess.check_call(cmd)
                 print(f"成功安装: {requirement}")
-            except subprocess.CalledProcessError as e:
+            except Exception as e: 
                 print(f"安装失败: {requirement} - {e}")
 
     def check_dependencies(self, requirements):
@@ -99,5 +99,5 @@ def check_package(requirements_path):
         print("所有依赖已安环境配置正常。")
 
 if __name__ == "__main__":
-    requirements_path = "E:\\GitHub\\Eagle_AItagger_byWD1.4\\requirements.txt"
+    requirements_path = "requirements.txt"
     check_package(requirements_path)

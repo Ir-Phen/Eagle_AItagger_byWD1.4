@@ -14,7 +14,7 @@ def get_img_list_info(img_input_list_path):
         return img_input_json_path, img_input_info
     
 # 读取图像json并创建一个数据库
-def read_img_json_data(img_input_info, img_input_json_path):
+def read_img_json_data(img_input_info, img_input_json_path,config_data):
     # 创建一个空的 DataFrame 并定义列名
     img_info_dataframe = pandas.DataFrame(columns=['id', 'name', 'annotation', 'old_tags', 'new_tags', 'new_tags_cn', 'image_path', 'json_path'])
     
@@ -43,9 +43,6 @@ def read_img_json_data(img_input_info, img_input_json_path):
         except Exception as e:
             print(f"读取JSON文件 {json_path} 时出错: {e}")
     
-    # 将 DataFrame 保存为 CSV 文件
-    img_info_dataframe.to_csv('image_info.csv', index=False, encoding='utf-8')
-    print("图像信息已保存到 image_info.csv")
     return img_info_dataframe
 
 # 主函数
@@ -73,7 +70,7 @@ def main():
     
     # 创建待处理图片的信息数据库
     img_input_json_path, img_input_info = get_img_list_info(img_input_list_path)
-    img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path)
+    img_info_dataframe = read_img_json_data(img_input_info, img_input_json_path, config_data)
     
     # 初始化wd14配置，读取 Model 键的值，转换成绝对路径
     model_path = config_data.get('Model', 'model_path')
@@ -140,11 +137,30 @@ def main():
         except Exception as e:
             print(f"更新JSON文件 {json_path} 时出错: {e}")
 
-    processed_csv_path = base_dir / 'image_info.csv'
-    img_info_dataframe.to_csv(processed_csv_path, index=False, encoding='utf-8')
-    print(f"\n处理后的数据已保存到 {processed_csv_path}")
+    # 检查未成功标记的图片
+    failed_images = []
+    for index, row in img_info_dataframe.iterrows():
+        use_chinese_name = config_data.get('Tag', 'use_chinese_name')
+        tags_col = 'new_tags_cn' if use_chinese_name is True else 'new_tags'
+        if not row[tags_col]:
+            failed_images.append(row['image_path'])
+    success_count = len(img_info_dataframe) - len(failed_images)
+    total_count = len(img_info_dataframe)
+    print(f'标记成功：{success_count}/{total_count}')
+    if failed_images:
+        print('未成功标记的图片路径：')
+        for path in failed_images:
+            print(path)
+    else:
+        print('所有图像已标注完成')
+
+    # 将 DataFrame 保存为 CSV 文件
+    is_creat_image_info_csv = config_data.getboolean('Json', 'is_creat_image_info_csv')
+    if is_creat_image_info_csv is True:
+        processed_csv_path = base_dir / 'image_info.csv'
+        img_info_dataframe.to_csv(processed_csv_path, index=False, encoding='utf-8')
+        print(f"\n处理后的数据已保存到 {processed_csv_path}")
 
 
 if __name__ == "__main__":
     main()
-    # base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径

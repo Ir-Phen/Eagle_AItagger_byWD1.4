@@ -1,10 +1,26 @@
-- [✓] 本体逻辑
+## 使用说明
 
-- [✓] 集成wd14
+1. 下载模型 (详见支持的模型列表) 到 *./model* ，将文件名改为模型的名称
+    - 示例：./model/swinv2-v3
 
-- [ ] 小功能完善
+2. 从 *requirements.txt* 安装依赖，或运行 *check_package*
 
-- [ ] 集成到eagle插件，通过本地接口将数据传递给py
+3. 从 Eagle 选择需要标注的图片，右键在菜单选择 **复制文件路径** (快捷键 **Ctrl+Alt+C** )
+
+4. 将文件路径粘贴到 *iamge_list.txt* 文件内
+
+    - 示例：
+    
+        ```
+        E:\动画与设计资源库.library\images\MAQGISQ1ELX97.info\124956717_p0.png
+        E:\动画与设计资源库.library\images\MAQGISQ1N6OHU.info\124719914_p0.png
+        E:\动画与设计资源库.library\images\MAQGISQ1Z8PST.info\124086849_p0.png
+        ```
+
+5. 如有需要，修改 *config.ini* 的参数配置
+
+6. 运行 main.py
+
 
 ## config配置
 
@@ -48,29 +64,24 @@ sort_alphabetically：是否按字母顺序排序（默认按置信度降序）
 
 [Json] --> 写入Eagle的配置
 
+is_creat_image_info_csv：是否创建一个image_info.csv文件，保存的是处理图片的标签数据与索引
+
 add_write_mode：标签的写入模式，默认True为追加写入，Fasle为覆盖写入
 
 ## 支持的模型列表
 
 **仅支持wd类的模型，db类的不支持**
 
-convnext-v3
+[convnext-v3](https://huggingface.co/SmilingWolf/wd-convnext-tagger-v3/tree/main) | [convnextv2-v2](https://huggingface.co/SmilingWolf/wd-v1-4-convnextv2-tagger-v2/tree/main) | [convnext-v2](https://huggingface.co/SmilingWolf/wd-v1-4-convnext-tagger-v2/tree/main) | [convnext](https://huggingface.co/SmilingWolf/wd-v1-4-convnext-tagger/tree/main)
 
-convnextv2-v2
+[swinv2-v2](https://huggingface.co/SmilingWolf/wd-v1-4-swinv2-tagger-v2/tree/main) | [swinv2-v3](https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3/tree/main)
 
-swinv2-v2
+[vit-large-v3](https://huggingface.co/SmilingWolf/wd-vit-large-tagger-v3/tree/main) | [vit-v3](https://huggingface.co/SmilingWolf/wd-vit-tagger-v3/tree/main) | [vit-v2](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger-v2/tree/main) | [vit](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger/tree/main)
 
-swinv2-v3：推荐，默认配置。
+[moat-v2](https://huggingface.co/SmilingWolf/wd-v1-4-moat-tagger-v2/tree/main)
 
-vit-v2
+[eva02-large-v3](https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/tree/main)
 
-vit-v3
-
-vit-large-tagger-v3
-
-wd14-moat-v2
-
-eva02-large-tagger-v3
 
 ## tag数据集
 

@@ -1,6 +1,15 @@
+## 更新说明
+
+集成图像推理代码，只需额外下载推理模型。合并中文标签字典与原始字典，可直接推理中文标签。
+
+更新计划：对大资源库的多线程推理与写入适配。对视频的标签推理。
+
+[多线程仓库](https://github.com/TheElevatedOne/wd14-tagger-standalone-threaded?tab=readme-ov-file#multithreading)
+
 ## 使用说明
 
 1. 下载模型 (详见支持的模型列表) 到 *./model* ，将文件名改为模型的名称
+    
     - 示例：./model/swinv2-v3
 
 2. 从 *requirements.txt* 安装依赖，或运行 *check_package*
@@ -85,6 +94,9 @@ add_write_mode：标签的写入模式，默认True为追加写入，Fasle为覆
 
 [eva02-large-v3](https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/tree/main)
 
+</br>
+
+镜像站：https://hf-mirror.com/SmilingWolf/
 
 ## tag数据集
 

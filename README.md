@@ -16,10 +16,13 @@
         E:\动画与设计资源库.library\images\MAQGISQ1N6OHU.info\124719914_p0.png
         E:\动画与设计资源库.library\images\MAQGISQ1Z8PST.info\124086849_p0.png
         ```
+5. 配置 *config.ini* 内模型键的参数
 
-5. 如有需要，修改 *config.ini* 的参数配置
+    - 示例：model_path = ./model/swinv2-v3.oonx
 
-6. 运行 main.py
+6. 如有需要，修改 *config.ini* 的其他参数配置
+
+7. 运行 main.py
 
 
 ## config配置

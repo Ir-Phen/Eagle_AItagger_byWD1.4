@@ -96,7 +96,7 @@ class WaifuDiffusionInterrogator:
 
     def load(self):
         """加载模型和标签"""
-
+        
         self.model = InferenceSession(
             str(self.model_path),
             providers=['CUDAExecutionProvider', 'CPUExecutionProvider']

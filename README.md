@@ -6,17 +6,31 @@
 
 [多线程仓库](https://github.com/TheElevatedOne/wd14-tagger-standalone-threaded?tab=readme-ov-file#multithreading)
 
+## gpu推理配置
+
+[CUDA 12.9](https://developer.download.nvidia.com/compute/cuda/12.9.0/local_installers/cuda_12.9.0_576.02_windows.exe)
+
+[cuDNN 9.10.1](https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.10.1.4_cuda12-archive.zip)
+
+[VC_redist.x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)
+
+将下载的cuDNN安装包里的文件夹放到CUDA安装路径下，一般是 **C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.9**
+
 ## 使用说明
 
-1. 下载模型 (详见支持的模型列表) 到 *./model* ，将文件名改为模型的名称
+1. 下载模型 (详见支持的模型列表) 到 **./model** ，将文件名改为模型的名称
     
     - 示例：./model/swinv2-v3
 
-2. 从 *requirements.txt* 安装依赖，或运行 *check_package*
+2. 从 **requirements.txt** 安装依赖
+
+    - 如要使用gpu推理，保证安装了cuda和cudnn。
+    
+    - [安装教程](https://www.bilibili.com/video/BV116eBefETi/)
 
 3. 从 Eagle 选择需要标注的图片，右键在菜单选择 **复制文件路径** (快捷键 **Ctrl+Alt+C** )
 
-4. 将文件路径粘贴到 *iamge_list.txt* 文件内
+4. 将文件路径粘贴到 **iamge_list.txt** 文件内
 
     - 示例：
     
@@ -25,11 +39,11 @@
         E:\动画与设计资源库.library\images\MAQGISQ1N6OHU.info\124719914_p0.png
         E:\动画与设计资源库.library\images\MAQGISQ1Z8PST.info\124086849_p0.png
         ```
-5. 配置 *config.ini* 内模型键的参数
+5. 配置 **config.ini** 内模型键的参数
 
     - 示例：model_path = ./model/swinv2-v3.oonx
 
-6. 如有需要，修改 *config.ini* 的其他参数配置
+6. 如有需要，修改 **config.ini** 的其他参数配置
 
 7. 运行 main.py
 
@@ -86,13 +100,13 @@ add_write_mode：标签的写入模式，默认True为追加写入，Fasle为覆
 
 [convnext-v3](https://huggingface.co/SmilingWolf/wd-convnext-tagger-v3/tree/main) | [convnextv2-v2](https://huggingface.co/SmilingWolf/wd-v1-4-convnextv2-tagger-v2/tree/main) | [convnext-v2](https://huggingface.co/SmilingWolf/wd-v1-4-convnext-tagger-v2/tree/main) | [convnext](https://huggingface.co/SmilingWolf/wd-v1-4-convnext-tagger/tree/main)
 
-[swinv2-v2](https://huggingface.co/SmilingWolf/wd-v1-4-swinv2-tagger-v2/tree/main) | [swinv2-v3](https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3/tree/main)
+[swinv2-v2](https://huggingface.co/SmilingWolf/wd-v1-4-swinv2-tagger-v2/tree/main) | [swinv2-v3](https://huggingface.co/SmilingWolf/wd-swinv2-tagger-v3/tree/main) **大多数情况的推荐**
 
 [vit-large-v3](https://huggingface.co/SmilingWolf/wd-vit-large-tagger-v3/tree/main) | [vit-v3](https://huggingface.co/SmilingWolf/wd-vit-tagger-v3/tree/main) | [vit-v2](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger-v2/tree/main) | [vit](https://huggingface.co/SmilingWolf/wd-v1-4-vit-tagger/tree/main)
 
 [moat-v2](https://huggingface.co/SmilingWolf/wd-v1-4-moat-tagger-v2/tree/main)
 
-[eva02-large-v3](https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/tree/main)
+[eva02-large-v3](https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/tree/main) **比swinv好，但是性能消耗也更大**
 
 </br>
 

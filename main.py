@@ -3,7 +3,6 @@ import json
 import pandas
 import configparser
 from Tagger import on_interrogate
-from check_package import check_package
 from check_updata import on_check_update
 
 # 从txt传入图像路径列表
@@ -48,10 +47,6 @@ def read_img_json_data(img_input_info, img_input_json_path,config_data):
 # 主函数
 def main():
     base_dir = Path(__file__).resolve().parent # 获取当前文件的绝对路径
-
-    # 调用check_package.py检查依赖
-    requirements_path = base_dir / 'requirements.txt' # 依赖路径
-    check_package(requirements_path)
 
     # 读取config
     global_config_path = base_dir / 'config.ini' # 全局配置文件路径

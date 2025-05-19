@@ -157,15 +157,21 @@ class TaggerService:
         # 合并后的标签处理逻辑参数
         self.model_path = Path(self.config_data.get('Model', 'model_path', fallback=None))
         self.tags_path = Path(self.config_data.get('Model', 'tags_path', fallback=None))
+
         self.additional_tags =self.config_data.get('Tag', 'additional_tags', fallback='')
-        
+        self.additional_tags = [tag.strip() for tag in self.additional_tags.split(',') if tag.strip()]
+        print(self.additional_tags)
+
         self.exclude_tags_str = self.config_data.get('Tag', 'exclude_tags', fallback='')
         self.exclude_tags = [tag.strip() for tag in self.exclude_tags_str.split(',') if tag.strip()]
         print(self.exclude_tags)
 
         self.threshold = self.config_data.getfloat('Tag', 'threshold', fallback=0.5)
         self.replace_underscore = self.config_data.getboolean('Tag', 'replace_underscore', fallback=True)
+        
         self.underscore_excludes = self.config_data.get('Tag', 'underscore_excludes', fallback='')
+        self.underscore_excludes = [tag.strip() for tag in self.underscore_excludes.split(',') if tag.strip()]
+
         self.sort_alphabetically = self.config_data.getboolean('Tag', 'sort_alphabetically', fallback=False)
         self.escape_tags = self.config_data.getboolean('Tag', 'escape_tags', fallback=False)
         self.use_chinese_name = self.config_data.getboolean('Tag', 'use_chinese_name', fallback=False)

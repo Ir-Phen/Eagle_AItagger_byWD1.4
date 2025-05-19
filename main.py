@@ -78,67 +78,58 @@ def main():
     config_data.set('Model', 'tags_path', str(tags_path) if tags_path else '')
 
     # 创建wd14实例
-    
     tagger = on_interrogate(config_data)
     
-    # 处理每个图像并获取新标签
+    # 处理每个图像并获取新标签，同时写入JSON文件
     print("\n开始处理图像标签...")
+    failed_images = []
     for index, row in img_info_dataframe.iterrows():
         image_path = Path(row['image_path'])
+        json_path = Path(row['json_path'])
         try:
             # 调用 WD14 处理图像
             tags = tagger.process_single_image(image_path)
-            # 将标签列表转换为字符串
             tag_list = list(tags.keys())
+            
+            # 更新DataFrame中的标签信息
             use_chinese_name = config_data.get('Tag', 'use_chinese_name')
             if use_chinese_name is True:
                 img_info_dataframe.at[index, 'new_tags_cn'] = ', '.join(tag_list)
             else:
                 img_info_dataframe.at[index, 'new_tags'] = ', '.join(tag_list)
             print(f"已处理：{image_path} -> 发现 {len(tag_list)} 个标签")
+        
+            # 读取并更新JSON文件
+            with open(json_path, 'r', encoding='utf-8') as json_file:
+                json_data = json.load(json_file)
+            
+            # 合并或覆盖标签
+            add_write_mode = config_data.getboolean('Json', 'add_write_mode')
+            existing_tags = json_data.get('tags', [])
+
+            if add_write_mode is True:
+                combined_tags = list(set(existing_tags + tag_list))
+            else:
+                combined_tags = tag_list
+            
+            json_data['tags'] = combined_tags
+            
+            with open(json_path, 'w', encoding='utf-8') as json_file:
+                json.dump(json_data, json_file, ensure_ascii=False)
+        
+            # 记录空标签为失败
+            if not tag_list:
+                failed_images.append(str(image_path))
+
         except Exception as e:
             print(f"处理失败：{image_path} | 错误：{str(e)}")
+            failed_images.append(str(image_path))
+
     # 释放内存
     if hasattr(tagger, 'unload') and callable(tagger.unload):
         tagger.unload()
         print("模型已卸载")
 
-    # 根据 use_chinese_name 的值将标签写入对应的 JSON 文件
-    for index, row in img_info_dataframe.iterrows():
-        json_path = row['json_path']
-        if use_chinese_name is True:
-            new_tags = row['new_tags_cn'].split(', ') if row['new_tags_cn'] else []
-        else:
-            new_tags = row['new_tags'].split(', ') if row['new_tags'] else []
-        try:
-            # 读取现有的JSON文件内容
-            with open(json_path, 'r', encoding='utf-8') as json_file:
-                json_data = json.load(json_file)
-            # 更新JSON文件中的tag键
-            json_data['tags'] = new_tags
-            # 判断是否覆盖还是追加
-            add_write_mode = config_data.get('Json', 'add_write_mode')
-            if 'tags' in json_data and isinstance(json_data['tags'], list):
-                if add_write_mode is True:
-                    json_data['tags'] = list(set(json_data['tags'] + new_tags))
-                else:
-                    json_data['tags'] = new_tags
-            else:
-                json_data['tags'] = new_tags
-        
-            # 将更新后的内容写回JSON文件
-            with open(json_path, 'w', encoding='utf-8') as json_file:
-                json.dump(json_data, json_file, ensure_ascii=False)
-        except Exception as e:
-            print(f"更新JSON文件 {json_path} 时出错: {e}")
-
-    # 检查未成功标记的图片
-    failed_images = []
-    for index, row in img_info_dataframe.iterrows():
-        use_chinese_name = config_data.get('Tag', 'use_chinese_name')
-        tags_col = 'new_tags_cn' if use_chinese_name is True else 'new_tags'
-        if not row[tags_col]:
-            failed_images.append(row['image_path'])
     success_count = len(img_info_dataframe) - len(failed_images)
     total_count = len(img_info_dataframe)
     print(f'标记成功：{success_count}/{total_count}')

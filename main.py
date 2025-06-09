@@ -57,17 +57,6 @@ def main():
     # 更新代码版本
     print("检查更新中")
     on_check_update(config_data, global_config_path)
-    choice = input("是否继续？(y/n): ").strip().lower()
-    if choice == 'y':
-        on_check_update(config_data, global_config_path)
-    elif choice == 'n':
-        print("已取消操作，按任意键退出。")
-        input()
-        exit()
-    else:
-        print("无效输入，程序退出。")
-        input()
-        exit()
 
     # 获取待处理图片路径
     img_input_list_path = base_dir / 'image_list.txt' # 图片路径列表文件路径

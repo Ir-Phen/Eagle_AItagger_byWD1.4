@@ -37,11 +37,19 @@ class VersionChecker:
         if version.parse(remote_version) > version.parse(local_version):
             print(f"\n发现新版本: {remote_version} (当前版本: {local_version})")
             print(f"更新内容: {update_notes}")
-            print(f"请访问以下地址手动更新: {self.github_url}\n")
+            print(f"项目地址: {self.github_url}")
+            
+            choice = input("\n是否继续运行当前版本？(y继续 / n退出): ").strip().lower()
+            if choice == 'y':
+                print("继续运行当前版本...\n")
+                return True
+            else:
+                print("已退出，请手动更新后重试。")
+                input("按回车键退出...")
+                exit()
+        else:
+            print("当前已是最新版本。\n")
             return True
-        
-        print("当前已是最新版本")
-        return False
 
 def on_check_update(config_data: configparser.ConfigParser, config_path: str) -> VersionChecker:
     checker = VersionChecker(config_data, config_path)

@@ -211,12 +211,19 @@ class TaggerService:
             filtered = {tag: conf for tag, conf in filtered.items() if tag not in self.exclude_tags}
         
         # 过滤非法字符
-        
-        filtered = {
-            tag: conf 
-            for tag, conf in filtered.items() 
-            if not any(c in tag for c in ['[', ']', ',', '(', ')', '\\'])  
-        }
+        illegal_chars = {'[', ']', ',', '(', ')', '\\'}
+        removed_tags = []  # 记录被移除的标签
+        valid_tags = {}    # 保留的有效标签
+        for tag, conf in filtered.items():
+            if len(tag) == 1 and tag in illegal_chars:
+                removed_tags.append(tag)
+            else:
+                valid_tags[tag] = conf
+        # 打印被移除的标签（调试用）
+        if removed_tags:
+            print(f"已过滤无效单字符标签: {', '.join(removed_tags)}")
+        filtered = valid_tags
+
         # 在排序处理中使用三元操作简化if逻辑
         sorted_tags = sorted(filtered.items(), key=lambda x: (-x[1], x[0]) if not self.sort_alphabetically else x[0])
 
@@ -250,16 +257,16 @@ def on_interrogate(config_data: dict) -> TaggerService:
     return setup_tagger_service(config_data)
 
 if __name__ == "__main__":
-    # raise
-    import configparser
-    config_data = configparser.ConfigParser()
-    config_data.read(r'E:\GitHub\Eagle_AItagger_byWD1.4\config.ini', encoding='utf-8')
-    image_path = r'E:\动画与设计资源库.library\images\MAQGISQ1ELX97.info\124956717_p0.png'
+    raise
+    # import configparser
+    # config_data = configparser.ConfigParser()
+    # config_data.read(r'E:\GitHub\Eagle_AItagger_byWD1.4\config.ini', encoding='utf-8')
+    # image_path = r'E:\动画与设计资源库.library\images\M1MIJT7FF1FWF.info\119370624_p0.webp'
 
-    tagger = setup_tagger_service(config_data)
-
-    try:
-        tags = tagger.process_single_image(Path(image_path))
-        print("\nDetected Tags:", ", ".join(tags.keys()))
-    except Exception as e:
-        print(f"Tagging failed: {str(e)}")
+    # tagger = setup_tagger_service(config_data)
+    # print("标签过滤阈值:", tagger.threshold)
+    # try:
+    #     tags = tagger.process_single_image(Path(image_path))
+    #     print("\nDetected Tags:", ", ".join(tags.keys()))
+    # except Exception as e:
+    #     print(f"Tagging failed: {str(e)}")

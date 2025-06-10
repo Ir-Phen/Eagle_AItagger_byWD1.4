@@ -4,6 +4,10 @@
 
 更新计划：对大资源库的多线程推理与写入适配。对视频的标签推理。
 
+3.0.2：修复了错误移除角色tag的bug
+
+3.1.0：翻译了935条tag
+
 [多线程仓库](https://github.com/TheElevatedOne/wd14-tagger-standalone-threaded?tab=readme-ov-file#multithreading)
 
 ## gpu推理配置

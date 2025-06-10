@@ -29,6 +29,7 @@ df['new_right_tag_cn'] = df['new_right_tag_cn'].str.replace('_', ' ')
 
 tag_map = dict(zip(df['old_right_tag_cn'], df['new_right_tag_cn']))
 print(f"共加载 {len(tag_map)} 条标签替换规则")
+print("扫描中，等待……")
 print(f"准备处理 {len(json_files)} 个 JSON 文件")
 
 # 多线程处理 JSON 文件

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import pandas as pd
 from concurrent.futures import ThreadPoolExecutor
+import threading # 导入 threading 模块用于线程锁
 
 # 获取 Eagle 资源库路径
 while True:
@@ -12,7 +13,6 @@ while True:
         break
     else:
         print("路径无效，请重新输入")
-
 
 images_dir = os.path.join(eagle_library_path, "images")
 # 获取所有 JSON 文件路径
@@ -32,17 +32,28 @@ print(f"共加载 {len(tag_map)} 条标签替换规则")
 print("扫描中，等待……")
 print(f"准备处理 {len(json_files)} 个 JSON 文件")
 
+# 已更新文件计数器
+updated_files_count = 0
+# 用于线程安全地访问计数器的锁
+count_lock = threading.Lock()
+
 # 多线程处理 JSON 文件
 def process_json(file_path):
-    print(f"正在处理: {file_path}")
+    global updated_files_count # 声明使用全局变量
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
 
         raw_tags = data.get('tags')
         updated = False
+        
+        # 确保 'tags' 键存在，否则跳过此文件
+        if raw_tags is None:
+            return
+
         if isinstance(raw_tags, str):
-            tags = [tag.strip() for tag in raw_tags.split(',')]
+            # 分割字符串并去除空字符串，例如 "tag1,,tag2" 会变成 ["tag1", "tag2"]
+            tags = [tag.strip() for tag in raw_tags.split(',') if tag.strip()]
             new_tags = []
             for tag in tags:
                 new_tag = tag_map.get(tag, tag)
@@ -55,8 +66,10 @@ def process_json(file_path):
         elif isinstance(raw_tags, list):
             new_tags = []
             for tag in raw_tags:
-                new_tag = tag_map.get(tag, tag)
-                if new_tag != tag:
+                # 确保标签是字符串类型，并去除首尾空格
+                tag_str = str(tag).strip() if tag is not None else ""
+                new_tag = tag_map.get(tag_str, tag_str)
+                if new_tag != tag_str:
                     updated = True
                 new_tags.append(new_tag)
             if updated:
@@ -64,9 +77,14 @@ def process_json(file_path):
 
         if updated:
             with open(file_path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False)
+            # 使用锁确保在多线程环境下安全地更新计数器
+            with count_lock:
+                updated_files_count += 1
             print(f"已更新: {file_path}")
 
+    except json.JSONDecodeError:
+        print(f"处理失败: {file_path} 不是有效的 JSON 文件。")
     except Exception as e:
         print(f"处理失败: {file_path} 错误: {e}")
 
@@ -74,4 +92,5 @@ def process_json(file_path):
 with ThreadPoolExecutor(max_workers=8) as executor:
     executor.map(process_json, json_files)
 
-print("处理完成")
+print("---") # 分隔线
+print(f"处理完成！共更新了 {updated_files_count} 个文件。") # 输出更新的文件总数

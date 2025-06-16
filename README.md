@@ -2,11 +2,11 @@
 
 集成图像推理代码，只需额外下载推理模型。合并中文标签字典与原始字典，可直接推理中文标签。
 
-更新计划：对大资源库的多线程推理与写入适配。对视频的标签推理。
-
 3.0.2：修复了错误移除角色tag的bug
 
 3.1.0：翻译了935条tag
+
+更新计划：对大资源库的多线程推理与写入适配。
 
 [多线程仓库](https://github.com/TheElevatedOne/wd14-tagger-standalone-threaded?tab=readme-ov-file#multithreading)
 

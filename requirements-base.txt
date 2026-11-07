@@ -1,0 +1,7 @@
+numpy
+opencv-python
+packaging
+pandas
+pillow
+pillow-heif
+requests

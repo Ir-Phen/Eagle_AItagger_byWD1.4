@@ -1,8 +1,2 @@
-numpy
+-r requirements-base.txt
 onnxruntime-directml
-opencv-python
-packaging
-pandas
-pillow
-pillow-heif
-requests

@@ -12,7 +12,8 @@ class ModelWorker:
         model_config = ModelConfig(
             model_path=Path(config_dict['model']['model_path']),
             tags_path=Path(config_dict['model']['tags_path']),
-            device_id=config_dict['model'].get('device_id', 0)
+            device_id=config_dict['model'].get('device_id', 0),
+            backend=config_dict['model'].get('backend', 'auto')
         )
         tag_config = TagConfig(**config_dict['tag'])
         process_config = ProcessConfig(**config_dict['process'])

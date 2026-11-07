@@ -1,6 +1,6 @@
 ## Eagle AI 图像标注工具
 
-基于 WD14 模型的 Eagle 图像自动标注工具。AMD 分支通过 ONNX Runtime DirectML 在 Windows 上加速推理，支持中文标签。
+基于 WD14 模型的 Eagle 图像自动标注工具，支持 AMD DirectML、NVIDIA CUDA 和中文标签。
 
 ### 版本 4.0.0 更新说明
 
@@ -18,7 +18,8 @@
 
 ## 环境需求
 
-- Windows 10 1903 或更高版本，以及支持 DirectX 12 的 AMD GPU 和显卡驱动。[DirectML 硬件要求](https://onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html)
+- AMD DirectML 需要 Windows 10 1903 或更高版本、支持 DirectX 12 的 AMD GPU 和显卡驱动。[DirectML 硬件要求](https://onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html)
+- NVIDIA CUDA 需要支持 CUDA 12.8 或更高版本的 NVIDIA 显卡驱动和 cuDNN 9。下方的 CUDA 依赖会通过 pip 安装 CUDA 12 和 cuDNN 9 运行库。[CUDA 兼容性](https://onnxruntime.ai/docs/execution-providers/CUDA-ExecutionProvider.html#requirements)
 - 64 位 Python 3.11–3.13。
 - [Microsoft Visual C++ Redistributable x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)。
 
@@ -26,12 +27,25 @@
 
 ### 1. 安装依赖
 
+在项目目录创建一个新的虚拟环境，再按显卡选择一组依赖。
+
 ```powershell
 python -m venv .venv
+```
+
+**AMD / DirectML**
+
+```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
-请为 AMD 分支使用独立的虚拟环境。同一环境只安装 `onnxruntime-directml` 这一种 ONNX Runtime 包。
+**NVIDIA / CUDA**
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements-cuda.txt
+```
+
+同一个虚拟环境只安装一种 ONNX Runtime 包。如果需要在同一台机器上保留两种后端，请给它们各建一个虚拟环境，并用对应环境的 Python 运行 `main.py`。
 
 ### 2. 下载模型
 
@@ -75,19 +89,21 @@ E:\动画与设计资源库.library\images\MAQGISQ1Z8PST.info\124086849_p0.png
 
 ```ini
 [Model]
-model_path = ./model/swinv2-v3.onnx  ; 模型文件路径
-tags_path = ./csv/Tags-cn_2024_ver-1.0.csv  ; 标签字典路径
+model_path = ./model/swinv2-v3.onnx
+tags_path = ./csv/Tags-cn_2024_ver-1.0.csv
+backend = auto
+device_id = 0
 
 [Tag]
-threshold = 0.5  ; 置信度阈值
-use_chinese_name = True  ; 使用中文标签
+threshold = 0.5
+use_chinese_name = True
 ```
 
 ### 5. 运行程序
 
 运行 `run.bat`
 
-或在仓库目录运行 `.\.venv\Scripts\python.exe main.py`。模型加载后会输出 `DmlExecutionProvider` 和设备编号。DirectML 无法初始化时程序会报错退出。ONNX Runtime 仍可将部分模型算子分配给 CPU。
+或在仓库目录运行 `.\.venv\Scripts\python.exe main.py`。模型加载后会输出 `CUDAExecutionProvider` 或 `DmlExecutionProvider` 以及设备编号。GPU 后端无法初始化时程序会报错退出。ONNX Runtime 仍可将部分模型算子分配给 CPU。
 
 ## 配置文件详解
 
@@ -105,7 +121,8 @@ use_chinese_name = True  ; 使用中文标签
 
 - `tags_path`: 标签字典路径（相对路径）
 
-- `device_id` 可选，默认 `0`。多显卡机器可填写目标 AMD GPU 的 DXGI 适配器编号。
+- `backend` 可选，默认 `auto`，按当前环境提供的后端选择，CUDA 优先。也可明确指定 `cuda` 或 `directml`。
+- `device_id` 可选，默认 `0`。CUDA 使用 CUDA 设备编号，DirectML 使用 DXGI 适配器编号。
 
 ### [Tag] - 标签处理
 
@@ -169,7 +186,7 @@ use_chinese_name = True  ; 使用中文标签
 
 - 确认模型文件完整无损
 
-- 确认程序使用已安装 `onnxruntime-directml` 的虚拟环境，检查 AMD 驱动和 `device_id`
+- 确认程序使用了为所选后端安装依赖的虚拟环境，并检查驱动和 `device_id`
 
 **2. GPU 内存不足**
 

@@ -11,7 +11,8 @@ class ModelWorker:
     def __init__(self, config_dict: Dict[str, Any]):
         model_config = ModelConfig(
             model_path=Path(config_dict['model']['model_path']),
-            tags_path=Path(config_dict['model']['tags_path'])
+            tags_path=Path(config_dict['model']['tags_path']),
+            device_id=config_dict['model'].get('device_id', 0)
         )
         tag_config = TagConfig(**config_dict['tag'])
         process_config = ProcessConfig(**config_dict['process'])
@@ -41,6 +42,8 @@ class ModelWorker:
             except Exception as e:
                 retry_count += 1
                 print(f"工作进程 {mp.current_process().name} 加载失败: {e}")
+                if retry_count == max_retries:
+                    raise RuntimeError(f"模型加载失败: {e}") from e
                 time.sleep(2)
         raise RuntimeError("模型加载失败，已重试多次")
 

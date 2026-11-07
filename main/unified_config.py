@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 class ModelConfig:
     model_path: Path
     tags_path: Path
+    device_id: int = 0
 
 @dataclass
 class TagConfig:
@@ -57,7 +58,8 @@ class UnifiedConfig:
         
         model = ModelConfig(
             model_path=Path(parser.get("Model", "model_path")),
-            tags_path=Path(parser.get("Model", "tags_path"))
+            tags_path=Path(parser.get("Model", "tags_path")),
+            device_id=parser.getint("Model", "device_id", fallback=0)
         )
         
         tag = TagConfig(
@@ -95,6 +97,8 @@ class UnifiedConfig:
                 raise ValueError(f"模型文件不存在: {self.model.model_path}")
             if not self.model.tags_path.exists():
                 raise ValueError(f"标签文件不存在: {self.model.tags_path}")
+            if self.model.device_id < 0:
+                raise ValueError(f"DirectML 设备编号不能小于 0: {self.model.device_id}")
             if not 0 <= self.tag.threshold <= 1:
                 raise ValueError(f"阈值必须在0-1之间: {self.tag.threshold}")
             if self.process.max_workers <= 0:
@@ -107,7 +111,11 @@ class UnifiedConfig:
     def to_dict(self) -> Dict[str, Any]:
         return {
             'version': self.version.__dict__,
-            'model': {'model_path': str(self.model.model_path), 'tags_path': str(self.model.tags_path)},
+            'model': {
+                'model_path': str(self.model.model_path),
+                'tags_path': str(self.model.tags_path),
+                'device_id': self.model.device_id
+            },
             'tag': self.tag.__dict__,
             'process': self.process.__dict__,
             'report': self.report.__dict__

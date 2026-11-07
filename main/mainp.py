@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-import traceback
 from .unified_config import UnifiedConfig
 from .task_dispatcher import TaskDispatcher
 from .process_pool_manager import ProcessPoolManager
@@ -67,6 +66,8 @@ def main(config_path: Path, img_list_path: Path):
         while completed_batches < total_batches:
             result = pool_manager.get_results(timeout=120)
             if 'error' in result:
+                if 'worker_id' in result:
+                    raise RuntimeError(f"工作进程 {result['worker_id']} 失败: {result['error']}")
                 print(f"\n获取结果出错: {result['error']}")
                 continue
                 
@@ -95,11 +96,8 @@ def main(config_path: Path, img_list_path: Path):
 
     except KeyboardInterrupt:
         print("\n程序被用户中断")
-    except Exception as e:
-        print(f"\n处理过程中发生错误: {e}")
-        traceback.print_exc()
     finally:
         print("\n正在清理资源...")
         progress_monitor.stop()
         pool_manager.shutdown()
-        input("程序结束，按回车键退出...")
+    input("程序结束，按回车键退出...")

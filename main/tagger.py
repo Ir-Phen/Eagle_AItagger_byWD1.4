@@ -4,11 +4,10 @@ from typing import Dict, Tuple
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 import pandas as pd
+import onnxruntime as ort
 
 # 注册 HEIC/HEIF 格式支持
 register_heif_opener()
-import numpy as np
-from onnxruntime import InferenceSession
 from .image_utils import ImageUtils  # 导入预处理工具
 
 
@@ -22,12 +21,29 @@ class WaifuDiffusionInterrogator:
 
     def load(self):
         """加载模型和标签"""
-        self.model = InferenceSession(
+        provider = "DmlExecutionProvider"
+        if provider not in ort.get_available_providers():
+            raise RuntimeError(
+                "当前 Python 环境缺少 DirectML。请在独立虚拟环境中安装 requirements.txt。"
+            )
+
+        device_id = self.config.model.device_id
+        options = ort.SessionOptions()
+        options.enable_mem_pattern = False
+        options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+        session = ort.InferenceSession(
             str(self.config.model.model_path),
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+            sess_options=options,
+            providers=[(provider, {"device_id": device_id})],
         )
+        if session.get_providers()[0] != provider:
+            raise RuntimeError(
+                f"DirectML 初始化失败 (device_id={device_id})，请检查显卡驱动和设备编号。"
+            )
+        session.disable_fallback()
         self.tags = pd.read_csv(self.config.model.tags_path)
-        print(f"从{self.config.model.model_path}加载模型")
+        self.model = session
+        print(f"从{self.config.model.model_path}加载模型，推理后端: {provider} (device_id={device_id})")
 
     def unload(self):
         """卸载模型"""

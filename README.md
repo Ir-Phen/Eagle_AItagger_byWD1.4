@@ -1,6 +1,6 @@
 ## Eagle AI 图像标注工具
 
-基于 WD14 模型的 Eagle 图像自动标注工具，支持多进程 GPU 加速推理和中文标签。
+基于 WD14 模型的 Eagle 图像自动标注工具。AMD 分支通过 ONNX Runtime DirectML 在 Windows 上加速推理，支持中文标签。
 
 ### 版本 4.0.0 更新说明
 
@@ -18,33 +18,20 @@
 
 ## 环境需求
 
-- **GPU**: NVIDIA GPU (推荐 4GB+ 显存)
-
-- **Python**: 3.8+
-
-- **CUDA**: 12.9 ([下载地址](https://developer.download.nvidia.com/compute/cuda/12.9.0/local_installers/cuda_12.9.0_576.02_windows.exe))
-
-- **cuDNN**: 9.10.1 ([下载地址](https://developer.download.nvidia.com/compute/cudnn/redist/cudnn/windows-x86_64/cudnn-windows-x86_64-9.10.1.4_cuda12-archive.zip))
-
-- **VC_redist.x64**: ([下载地址](https://aka.ms/vs/17/release/vc_redist.x64.exe))
-
-### GPU 推理配置
-
-1. 安装 CUDA 12.9
-
-2. 安装 cuDNN 9.10.1（将解压文件夹内容复制到 CUDA 安装目录，通常是 `C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.9`）
-
-3. 安装 VC_redist.x64
-
-4. [安装教程视频](https://www.bilibili.com/video/BV116eBefETi/)
+- Windows 10 1903 或更高版本，以及支持 DirectX 12 的 AMD GPU 和显卡驱动。[DirectML 硬件要求](https://onnxruntime.ai/docs/execution-providers/DirectML-ExecutionProvider.html)
+- 64 位 Python 3.11–3.13。
+- [Microsoft Visual C++ Redistributable x64](https://aka.ms/vs/17/release/vc_redist.x64.exe)。
 
 ## 快速开始
 
 ### 1. 安装依赖
 
-```bash
-pip install -r requirements.txt
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
+
+请为 AMD 分支使用独立的虚拟环境。同一环境只安装 `onnxruntime-directml` 这一种 ONNX Runtime 包。
 
 ### 2. 下载模型
 
@@ -100,7 +87,7 @@ use_chinese_name = True  ; 使用中文标签
 
 运行 `run.bat`
 
-或运行 `main.py`
+或在仓库目录运行 `.\.venv\Scripts\python.exe main.py`。模型加载后会输出 `DmlExecutionProvider` 和设备编号。DirectML 无法初始化时程序会报错退出。ONNX Runtime 仍可将部分模型算子分配给 CPU。
 
 ## 配置文件详解
 
@@ -117,6 +104,8 @@ use_chinese_name = True  ; 使用中文标签
 - `model_path`: 推理模型路径（相对路径）
 
 - `tags_path`: 标签字典路径（相对路径）
+
+- `device_id` 可选，默认 `0`。多显卡机器可填写目标 AMD GPU 的 DXGI 适配器编号。
 
 ### [Tag] - 标签处理
 
@@ -146,7 +135,7 @@ use_chinese_name = True  ; 使用中文标签
 
 - `max_workers`: **工作进程数**（根据 GPU 显存调整）
 
-  - Eva02 模型 (1.5GB): 6G显存:2进程, 8G显存:3进程（推荐保留2G空闲显存）
+  - 每个进程单独加载模型。使用 Eva02 等大模型时，可先设为 `1`，再按实际显存占用调整。
 
 - `batch_size`: 批处理大小（自动调整，无需手动设置）
 
@@ -180,7 +169,7 @@ use_chinese_name = True  ; 使用中文标签
 
 - 确认模型文件完整无损
 
-- 验证 CUDA 和 cuDNN 安装
+- 确认程序使用已安装 `onnxruntime-directml` 的虚拟环境，检查 AMD 驱动和 `device_id`
 
 **2. GPU 内存不足**
 

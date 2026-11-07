@@ -4,12 +4,12 @@ from typing import Dict, Tuple
 from PIL import Image, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 import pandas as pd
+import onnxruntime as ort
 
 # 注册 HEIC/HEIF 格式支持
 register_heif_opener()
-import numpy as np
-from onnxruntime import InferenceSession
 from .image_utils import ImageUtils  # 导入预处理工具
+from .unified_config import GPU_PROVIDERS
 
 
 class WaifuDiffusionInterrogator:
@@ -22,12 +22,42 @@ class WaifuDiffusionInterrogator:
 
     def load(self):
         """加载模型和标签"""
-        self.model = InferenceSession(
+        available = ort.get_available_providers()
+        backend = self.config.model.backend
+        if backend == "auto":
+            backend = next(
+                (name for name, provider in GPU_PROVIDERS.items() if provider in available),
+                None,
+            )
+        provider = GPU_PROVIDERS.get(backend)
+        if provider not in available:
+            raise RuntimeError(
+                f"当前 Python 环境无法使用 backend={self.config.model.backend}。"
+                "请安装所选后端的依赖：DirectML 使用 requirements.txt，"
+                "CUDA 使用 requirements-cuda.txt。"
+            )
+
+        device_id = self.config.model.device_id
+        options = ort.SessionOptions()
+        if backend == "directml":
+            options.enable_mem_pattern = False
+            options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+        elif hasattr(ort, "preload_dlls"):
+            ort.preload_dlls()
+        session = ort.InferenceSession(
             str(self.config.model.model_path),
-            providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+            sess_options=options,
+            providers=[(provider, {"device_id": device_id})],
         )
+        if session.get_providers()[0] != provider:
+            raise RuntimeError(
+                f"{provider} 初始化失败 (device_id={device_id})，"
+                "请检查显卡驱动、推理依赖和设备编号。"
+            )
+        session.disable_fallback()
         self.tags = pd.read_csv(self.config.model.tags_path)
-        print(f"从{self.config.model.model_path}加载模型")
+        self.model = session
+        print(f"从{self.config.model.model_path}加载模型，推理后端: {provider} (device_id={device_id})")
 
     def unload(self):
         """卸载模型"""

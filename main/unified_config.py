@@ -4,10 +4,17 @@ from pathlib import Path
 from typing import List, Dict, Any
 from dataclasses import dataclass, field
 
+GPU_PROVIDERS = {
+    "cuda": "CUDAExecutionProvider",
+    "directml": "DmlExecutionProvider",
+}
+
 @dataclass
 class ModelConfig:
     model_path: Path
     tags_path: Path
+    device_id: int = 0
+    backend: str = "auto"
 
 @dataclass
 class TagConfig:
@@ -57,7 +64,9 @@ class UnifiedConfig:
         
         model = ModelConfig(
             model_path=Path(parser.get("Model", "model_path")),
-            tags_path=Path(parser.get("Model", "tags_path"))
+            tags_path=Path(parser.get("Model", "tags_path")),
+            device_id=parser.getint("Model", "device_id", fallback=0),
+            backend=parser.get("Model", "backend", fallback="auto").strip().lower()
         )
         
         tag = TagConfig(
@@ -95,6 +104,10 @@ class UnifiedConfig:
                 raise ValueError(f"模型文件不存在: {self.model.model_path}")
             if not self.model.tags_path.exists():
                 raise ValueError(f"标签文件不存在: {self.model.tags_path}")
+            if self.model.device_id < 0:
+                raise ValueError(f"GPU 设备编号不能小于 0: {self.model.device_id}")
+            if self.model.backend != "auto" and self.model.backend not in GPU_PROVIDERS:
+                raise ValueError(f"backend 必须为 auto、cuda 或 directml: {self.model.backend}")
             if not 0 <= self.tag.threshold <= 1:
                 raise ValueError(f"阈值必须在0-1之间: {self.tag.threshold}")
             if self.process.max_workers <= 0:
@@ -107,7 +120,12 @@ class UnifiedConfig:
     def to_dict(self) -> Dict[str, Any]:
         return {
             'version': self.version.__dict__,
-            'model': {'model_path': str(self.model.model_path), 'tags_path': str(self.model.tags_path)},
+            'model': {
+                'model_path': str(self.model.model_path),
+                'tags_path': str(self.model.tags_path),
+                'device_id': self.model.device_id,
+                'backend': self.model.backend
+            },
             'tag': self.tag.__dict__,
             'process': self.process.__dict__,
             'report': self.report.__dict__

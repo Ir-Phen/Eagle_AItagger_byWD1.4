@@ -1,0 +1,5 @@
+-r requirements-base.txt
+# PyPI wheels before 1.27 use CUDA 12 and cuDNN 9.
+onnxruntime-gpu[cuda,cudnn]>=1.24.4,<1.27
+# The Windows ONNX Runtime 1.26 wheel does not declare cuBLAS in its CUDA extra.
+nvidia-cublas-cu12>=12.8,<13; sys_platform == "win32"
